@@ -1,201 +1,149 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/qpVdAqjX)
-# Assignment 4: Traffic Routing with Unit Tests
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/vBh8TXjn)
+# Assignment 5: Advanced Traffic Routing with Template Method
 
-In this assignment, you will create a simple simulation of an infrastructure built with servers that handle requests and a traffic routing component that distributes these requests. By the end of this assignment, you should be able to:
-1.	Define interfaces to model a server and a traffic routing system.
-2.	Implement a traffic routing class that distributes requests equally among servers.
-3.	Create a unit tests project and use Moq to verify your implementation.
+In this assignment, you will extend your previous traffic routing simulation by implementing multiple types of traffic routing strategies. This work will give you the opportunity to:
 
+1.	**Leverage Enums** to manage various server types required by each routing strategy
 
+2.	**Implement the Template Method pattern** to maintain a consistent structure while selectively overriding behavior for different routing strategies.
 
-Our classwork will build upon the project you concluded last week, as we work to improve the capabilities of our Infrastructure Simulator.
+3. **Enhance your unit testing skills** by expanding your test coverage.
 
+By the end of this assignment, you will have designed flexible and maintainable traffic routing systems customized for different server configurations, along with robust tests to validate your implementations.
 
+<div style="margin-top:80px;"></div>
 
-## 1. Create the Core Interfaces and Classes
+## Part 1: Managing Multiple Server Types
 
-This assignment focuses on building a basic model that simulates an infrastructure comprised of servers and a traffic routing mechanism.
+Our Infrastructure Simulator will manage various types of servers:
 
-We begin by defining clear interfaces to outline the system’s responsibilities:
--  An interface named `IServer` is created with a method `HandleRequests(int requestsCount)`, which ensures that each server can process a given number of requests. 
-- An `ITrafficRouting` interface is established with a method `RouterTraffic(int)`, designed to determine how incoming requests are allocated among the available servers.
+- CDN
+- Load Balancer
+- Cache
+- Server
 
-![Layout](Images/Structure.png)
+### 1. Create an Enum for Server Types:
 
-### 🏁  Commit Your Changes
+- Define an enum that handles the different types of servers.
 
-## 2. **Implementing Traffic Routinf Logic**  
+- [Learn more about enums](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum).
 
-At this stage, the rules for traffic routing are straightforward:
-- CalculateRequests:
+### 2. Update the IServer Interface:
 
-Will return the total number of requests.
+- Add a ServerType property to your existing IServer interface.
 
-- ObtainServers:
+![Server UML](Images/Server.png)
 
-Return the total list of servers.
-
-- SendRequestsToServer:
-
-Divide the total requests equally among the servers.
-
-**Tip**: For 100 requests and 3 servers, each server should get 33 requests, and one server should handle 34 requests (to account for the remainder).
-
-- RouteTraffic:
-
-Should call the SendRequestsToServer with the defined rules:
-
-```csharp
-        int requests = CalculateRequests(requestsCount);
-        List<IServer> servers = ObtainServers();
-        SendRequestsToServers(requests, servers);
-```
-
-
+<br>
 
 ### 🏁  Commit Your Changes
+<br><br><br><br>
 
 
+## Part 2: Understanding the InfraSim routing
 
-## 3. Set Up the Unit Tests Project
+For our Infrastrucuture Simulator, traffic flows as described in the diagram below:
 
-At this stage is time to test your code and see if it works as expected. On opposite on how you have been testing until now, you don't have a way to test using the web interface, because we don't have a flow from the web interface with your TrafficRouting code.
+![Infrastructure Routing](Images/InfrastructureRouting.png)
 
-We can do it by using Unit Tests. Unit tests are small tests that check the correctness of individual parts of your code, typically functions or methods.  
+**Key Points:**
 
-1. Verify your folder structure 
+- CDN and Cache Routing:
 
-Before creating a tests structure, please verify if you have the following folder structure. If not, arrange as presented below:
+  - Two distinct routing needs exist: one for CDNs and another for Caches.
 
-```
-\
-| - InfraSim    <- Folder for InfraSim project
-| - InfraSim.sln  <- File of the Solution
+- Load Balancers and Servers:
 
-```
+  - Thes will handle 100% of the remaining traffic. A generic approach can be applied here.
 
-2. Create a new Tests Project
+### 1. Create classes for:
 
-To create a test project, you’ll need to run the following command where your sln file is present.
-```bash
-dotnet new xunit -n InfraSim.Tests
-```
+- `CDNTrafficRouting`
+- `CacheTrafficRouting`
+- `FullTrafficRouting`
 
-Verify if your folder's structure is the following:
-
-```
-\
-| - InfraSim    <- Folder for InfraSim project
-| - InfraSim.Test. <-Folder for the InfraSim Test Project
-| - InfraSim.sln  <- File of the Solution
-
-```
-
-3. Add your project to the solution:
-
-``` bash
-dotnet sln add InfraSim.Tests/InfraSim.Tests.csproj
-```
-
-Your sln file should now have reference for both projects.
-
-4. Make sure it builds
-
-```bash
-dotnet build
-```
-
-5. Run the tests
-
-```bash
-dotnet test
-```
-
-It should say 1 test passed.
+<br>
 
 ### 🏁  Commit Your Changes
-
-## 4. Write Your First Unit Test
-
-1. **Create a new test class**
-
-Create your TrafficRoutingTests.cs in your tests project.
-
-2. **Create your new test method**
-
-```csharp
-[Fact] 
- public void TestRequestCount_ShouldReturnCorrectRequestCount()
-```
-
-Note that `Fact` attribute indicates to the Xunit Framework that this is a Unit Test.
-
-3. **Reference your InfraSim Project**
-
-If you instantiate the `TrafficRouting`, you get an error! To access the `InfraSim` project in the test project, you must add a reference to the main project.
-
-```bash
-dotnet add InfraSim.Tests/InfraSim.Tests.csproj reference InfraSim/InfraSim.csproj
-```
-
-Verify if your `InfraSim.Tests.csproj` has a reference to the `InfraSim` project.
+<br><br><br><br>
 
 
-4. **Create your Unit Test**
+## Part 3: Implementing the Template Method
 
-Providing an example of your first test:
+> Template Method is a behavioral design pattern that defines the skeleton of an algorithm in the superclass but lets subclasses override specific steps of the algorithm without changing its structure.
 
-```csharp
-    TrafficRouting trafficRouting = new TrafficRouting(new List<IServer>());
-    Assert.Equal(100, trafficRouting.CalculateRequests(100));
-```
 
-The `Assert` will verify if the specific expectations are valid. If they aren't, the test will fail and will show in the test report.
+### 1. Make `TrafficRouting` an abstract class.
 
+- Convert your TrafficRouting class into an abstract class.
+
+### 2. Define Abstract Methods
+
+- Identify and mark the methods that should be abstract, ensuring the subclasses will implement them.
+
+- **Note:** Abstract methods cannot have any implementation.
+
+### 3. Project Integrity:
+
+- Ensure your InfraSim project compiles without issues.
+
+- **Note:** we will not look into the tests project at this stage, even if failing.
+
+<br>
 
 ### 🏁  Commit Your Changes
+<br><br><br><br>
 
 
-## 5. Enhance Test Coverage Using Moq
 
-You will need to test all the methods of the TrafficRouting. 
-For some of the tests, you’ll need IServer instances, which do not exist. You can achieve this using Moq.
+## Part 4: Implementing Specific Routing Behavior
 
-1. **Add Moq to your Test Project**
+Now its time to implement the specs of each routing system.
 
-Please add Moq to your Test project by running the following command. Go to your tests project and perform the following command:
+### 1. Subclass Implementation: 
 
-```bash
-dotnet add package Moq
-```
+- Inherit `CDNTrafficRouting`, `CacheTrafficRouting` and `FullTrafficRouting` from the TrafficRouting abstract class.
 
-2. **Create a Mock instance**
+### 2. Implement Abstract Members:
 
-Now you can create a Mock instance of IServer as the following:
+- Provide concrete implementations for the inherited abstract members according to the specifications.
 
-```csharp
-Mock<IServer> server1 = new Mock<IServer>();
-```
+- **Tip** To query a List, consider using [Where method](https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.where?view=net-9.0#system-linq-enumerable-where-1(system-collections-generic-ienumerable((-0))-system-func((-0-system-boolean)))).
 
-3. **Test your ObtainServers method**
+- **Tip** FullTrafficRouting requires the server type, once it is a generic traffic and it does not know to which servers to send the traffic. You can use the constuctor to pass this parameter.
 
-Now, you can verify if `ObtainServers` are returning the expected servers.
-
-4. **Test your Server distribution**
-
-At last, check if the logic for server distribution is as expected.
-
-
-**Tip** You can create a Verify on a mock server and check if a method is called with an expected parameter:
-
-```csharp
-mockServer1.Verify(s => s.HandleRequests(expectedRequestsPerServer1), Times.Once);
-```
+<br>
 
 ### 🏁  Commit Your Changes
+<br><br><br><br>
 
-## Final Reminder
 
-**⚠️ Don't Forget:** Push your code to this assignment remote repository once you have completed all parts of the assignment. This assignment is designed to help you understand interface design, class implementation, and unit testing with mocking.
+
+## Part 5: Testing Your Implementation
+
+
+### 1. Review Existing Tests
+
+- Note that tests for TrafficRouting are now invalid because it’s abstract. Instead, reuse these tests for FullTrafficRouting by configuring the ServerType to Server.
+
+- **Tip** configure the ServerType of the IServer mock:
+```csharp
+mockServer.Setup(s => s.ServerType).Returns(ServerType.Server);
+```
+
+### 2. Create New Test Files
+
+- Write tests for `CDNTrafficRouting` and `CacheTrafficRouting`.
+
+<br>
+
+### 🏁  Commit Your Changes
+<br><br><br><br>
+
+
+
+# Final Reminder
+
+⚠️ Don’t Forget: Push your code to this assignment remote repository once you have completed all parts of the assignment. This assignment is designed to help you understand not only the Template Method design pattern but also interface design, class implementation, and unit testing with mocking.
 
 Good luck, and enjoy building your Traffic Routing Infrastructure! Use these guidelines to structure your solution, and feel free to experiment and ask questions as you work through the assignment.
