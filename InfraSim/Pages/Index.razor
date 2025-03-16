@@ -6,31 +6,48 @@
         display: flex;
         flex-direction: row;
         gap: 24px;
+        padding: 20px;
     }
 
     .control-panel {
-        width: 200px;
+        width: 140px;
+    }
+
+    .servers-panel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 16px;
+        flex: 1;
     }
 </style>
 
-<h1>Counter</h1> 
-
 <div class="container">
     <div class="control-panel">
+        <Actions StartPressed="@StartIncrementing" AddPressed="@AddServer" />
         <Users UserCount="@userCounter.Counter" />
-        <Actions StartPressed="@StartIncrementing" />
     </div>
     <div class="servers-panel">
-        @* Server components will be added here *@
+        @for (int i = 0; i < serverCount; i++)
+        {
+            <Server Label="@($"Server")" />
+        }
     </div>
 </div>
 
 @code {
     private UserCounter userCounter = new UserCounter();
+    private int serverCount = 0;
 
     protected override void OnInitialized()
     {
         userCounter.OnCounterChanged += StateHasChanged;
+    }
+
+    private void AddServer()
+    {
+        serverCount++;
+        StateHasChanged();
     }
 
     private async Task StartIncrementing()
@@ -38,8 +55,8 @@
         await userCounter.StartIncrementingAsync(); // Start the incrementing
     }
 
-    public void Dispose()
+    public void Dispose() // Dispose of the user counter
     {
-        userCounter.OnCounterChanged -= StateHasChanged;
+        userCounter.OnCounterChanged -= StateHasChanged; // Unsubscribe from the counter changed event
     }
 }
