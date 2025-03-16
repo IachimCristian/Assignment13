@@ -1,10 +1,11 @@
 ﻿@page "/"
+@using InfraSim.Pages
 
-<h1>Counter</h1>
+<h1>Counter</h1> 
 
 <p>Current count: @userCounter.Counter</p>
 
-<button @onclick="StartIncrementing">Start Incrementing</button>
+<Actions StartPressed="@StartIncrementing" />
 
 @code {
     private UserCounter userCounter = new UserCounter();
@@ -16,7 +17,7 @@
 
     private async Task StartIncrementing()
     {
-        await userCounter.StartIncrementingAsync();
+        await userCounter.StartIncrementingAsync(); // Start the incrementing
     }
 
     public void Dispose()
@@ -24,7 +25,3 @@
         userCounter.OnCounterChanged -= StateHasChanged;
     }
 }
-
-
-<!-- Add the Actions component here -->
-<Actions />

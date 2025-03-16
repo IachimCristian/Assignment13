@@ -1,4 +1,16 @@
+@using Microsoft.AspNetCore.Components
+
 <div class="div-container">
-    <button class="round-button green-button">Start</button>
+    <button class="round-button green-button" @onclick="HandleStartClick">Start</button>
     <button class="round-button grey-button">Add</button>
 </div>
+
+@code {
+    [Parameter]
+    public EventCallback StartPressed { get; set; }
+
+    private async Task HandleStartClick()
+    {
+        await StartPressed.InvokeAsync();
+    }
+}
