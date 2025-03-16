@@ -8,7 +8,7 @@ namespace InfraSim.Tests
     public class TrafficRoutingTests
     {
         [Fact]
-        public void CalculateRequests_ReturnsInputValue()
+        public void CalculateRequests_ReturnsInputValue() // Test if the CalculateRequests method returns the input value
         {
             var trafficRouting = new TrafficRouting();
             int requestCount = 100;
@@ -19,14 +19,14 @@ namespace InfraSim.Tests
         }
 
         [Fact]
-        public void TestRequestCount_ShouldReturnCorrectRequestCount()
+        public void TestRequestCount_ShouldReturnCorrectRequestCount() // Test if the CalculateRequests method return the correct request count
         {
             TrafficRouting trafficRouting = new TrafficRouting(new List<IServer>());
             Assert.Equal(100, trafficRouting.CalculateRequests(100));
         }
 
         [Fact]
-        public void ObtainServers_ReturnsAllServers()
+        public void ObtainServers_ReturnsAllServers() // Test if the ObtainServers method returns all servers
         {
             var trafficRouting = new TrafficRouting();
             var mockServer1 = new Mock<IServer>();
@@ -43,7 +43,7 @@ namespace InfraSim.Tests
         }
 
         [Fact]
-        public void SendRequestsToServers_DistributesRequestsEvenly()
+        public void SendRequestsToServers_DistributesRequestsEvenly() // Test if the SendRequestsToServers method distributes the requests evenly
         {
             var trafficRouting = new TrafficRouting();
             var mockServer1 = new Mock<IServer>();

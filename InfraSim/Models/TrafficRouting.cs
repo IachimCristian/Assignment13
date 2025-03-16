@@ -16,24 +16,24 @@ namespace InfraSim.Models
             Servers = servers ?? new List<IServer>();
         }
 
-        public void RouteTraffic(int requestCount)
+        public virtual void RouteTraffic(int requestCount)
         {
             int requests = CalculateRequests(requestCount);
             List<IServer> servers = ObtainServers();
             SendRequestsToServers(requests, servers);
         }
 
-        public int CalculateRequests(int requestCount)
+        public virtual int CalculateRequests(int requestCount)
         {
             return requestCount;
         }
 
-        public List<IServer> ObtainServers()
+        public virtual List<IServer> ObtainServers()
         {
             return Servers;
         }
 
-        public void SendRequestsToServers(int requestCount, List<IServer> servers)
+        public virtual void SendRequestsToServers(int requestCount, List<IServer> servers)
         {
             if (servers.Count == 0)
                 return;
