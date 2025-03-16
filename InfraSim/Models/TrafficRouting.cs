@@ -11,6 +11,11 @@ namespace InfraSim.Models
             Servers = new List<IServer>();
         }
 
+        public TrafficRouting(List<IServer> servers)
+        {
+            Servers = servers ?? new List<IServer>();
+        }
+
         public void RouteTraffic(int requestCount)
         {
             int requests = CalculateRequests(requestCount);
