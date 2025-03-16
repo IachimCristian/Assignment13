@@ -1,11 +1,11 @@
 @using Microsoft.AspNetCore.Components
 
-<div class="user-container">
-    <img src="/images/user-icon.png" alt="User Icon" />
-    <span>@Counter</span>
+<div class="div-container">
+    <img src="images/users.png" alt="Users" class="user-image" />
+    <span class="user-count">@UserCount</span>
 </div>
 
 @code {
     [Parameter]
-    public int Counter { get; set; }
+    public int UserCount { get; set; }
 }

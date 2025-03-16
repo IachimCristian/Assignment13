@@ -1,0 +1,17 @@
+.div-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.user-image {
+    width: 32px;
+    height: 32px;
+}
+
+.user-count {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+}
