@@ -1,150 +1,201 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/6tAGuDvy)
-# Assignment 3: Working with Razor Components
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/qpVdAqjX)
+# Assignment 4: Traffic Routing with Unit Tests
 
-In our last class, you created a Blazor Server application and simulated user growth. This class, we will introduce **Razor components**: how to build them, link them, and apply CSS to improve the user interface.
-
-By the end of this class, you should be able to:
-
-1. Understand the fundamentals of Razor components.  
-2. Build and link multiple Razor components.  
-3. Apply basic CSS to style your application.
-
-In this class, we will focus on visual specifications using Razor components, with the goal of building the following page:
-
-![Layout](Images/PageLayout.png)
-
-Our classwork will build upon the project you concluded last week, as we work to enhance the layout of the page using Razor components and some basic CSS.
+In this assignment, you will create a simple simulation of an infrastructure built with servers that handle requests and a traffic routing component that distributes these requests. By the end of this assignment, you should be able to:
+1.	Define interfaces to model a server and a traffic routing system.
+2.	Implement a traffic routing class that distributes requests equally among servers.
+3.	Create a unit tests project and use Moq to verify your implementation.
 
 
 
-## 1. Create the first Component
+Our classwork will build upon the project you concluded last week, as we work to improve the capabilities of our Infrastructure Simulator.
 
-1. **Add Buttons**  
-   - In a new file named `Actions.razor`, create a `<div>` container to hold your buttons.  
-   - Create a corresponding `Actions.razor.css` file and define a `.div-container` class with the following properties:
-     ```css
-     .div-container {
-       display: flex;
-       justify-content: space-around;
-     }
-     ```
-   - Add your `Actions` component to the main Razor component by using its HTML tag:
-     ```razor
-     <Actions />
-     ```
 
-2. **Style the Buttons**  
-   - Make the buttons round and apply specific colors (e.g., green and grey).  
-   - A recommended approach is to define a shared CSS class for the round shape, and separate classes for color variations.  
-     - Example: `.round-button`, `.green-button`, `.grey-button`.
+
+## 1. Create the Core Interfaces and Classes
+
+This assignment focuses on building a basic model that simulates an infrastructure comprised of servers and a traffic routing mechanism.
+
+We begin by defining clear interfaces to outline the system’s responsibilities:
+-  An interface named `IServer` is created with a method `HandleRequests(int requestsCount)`, which ensures that each server can process a given number of requests. 
+- An `ITrafficRouting` interface is established with a method `RouterTraffic(int)`, designed to determine how incoming requests are allocated among the available servers.
+
+![Layout](Images/Structure.png)
+
+### 🏁  Commit Your Changes
+
+## 2. **Implementing Traffic Routinf Logic**  
+
+At this stage, the rules for traffic routing are straightforward:
+- CalculateRequests:
+
+Will return the total number of requests.
+
+- ObtainServers:
+
+Return the total list of servers.
+
+- SendRequestsToServer:
+
+Divide the total requests equally among the servers.
+
+**Tip**: For 100 requests and 3 servers, each server should get 33 requests, and one server should handle 34 requests (to account for the remainder).
+
+- RouteTraffic:
+
+Should call the SendRequestsToServer with the defined rules:
+
+```csharp
+        int requests = CalculateRequests(requestsCount);
+        List<IServer> servers = ObtainServers();
+        SendRequestsToServers(requests, servers);
+```
+
+
 
 ### 🏁  Commit Your Changes
 
 
 
-## 2. Using Parameters and EventCallbacks
+## 3. Set Up the Unit Tests Project
 
-We want the "Start" button to run the same increment logic used in the previous class, without hosting that logic in the `Actions` component itself.
+At this stage is time to test your code and see if it works as expected. On opposite on how you have been testing until now, you don't have a way to test using the web interface, because we don't have a flow from the web interface with your TrafficRouting code.
 
-1. **Use `EventCallback`**  
-   - In `Actions.razor`, create a parameter of type `EventCallback` to notify the parent component when the "Start" button is clicked. For example:
-     ```csharp
-     [Parameter]
-     public EventCallback StartPressed { get; set; }
-     ```
-   - In the component's code, create a method to handle the button click event and invoke `StartPressed`.
+We can do it by using Unit Tests. Unit tests are small tests that check the correctness of individual parts of your code, typically functions or methods.  
 
-2. **Handle the Action in the Parent**  
-   - In your main component (parent), define a method (e.g., `StartIncrementing`) that increments the user counter.  
-   - Pass this method to your `Actions` component:
-     ```razor
-     <Actions StartPressed="@StartIncrementing" />
-     ```
-   - Remove or comment out the old button from the previous class, as it is no longer needed.
+1. Verify your folder structure 
+
+Before creating a tests structure, please verify if you have the following folder structure. If not, arrange as presented below:
+
+```
+\
+| - InfraSim    <- Folder for InfraSim project
+| - InfraSim.sln  <- File of the Solution
+
+```
+
+2. Create a new Tests Project
+
+To create a test project, you’ll need to run the following command where your sln file is present.
+```bash
+dotnet new xunit -n InfraSim.Tests
+```
+
+Verify if your folder's structure is the following:
+
+```
+\
+| - InfraSim    <- Folder for InfraSim project
+| - InfraSim.Test. <-Folder for the InfraSim Test Project
+| - InfraSim.sln  <- File of the Solution
+
+```
+
+3. Add your project to the solution:
+
+``` bash
+dotnet sln add InfraSim.Tests/InfraSim.Tests.csproj
+```
+
+Your sln file should now have reference for both projects.
+
+4. Make sure it builds
+
+```bash
+dotnet build
+```
+
+5. Run the tests
+
+```bash
+dotnet test
+```
+
+It should say 1 test passed.
+
+### 🏁  Commit Your Changes
+
+## 4. Write Your First Unit Test
+
+1. **Create a new test class**
+
+Create your TrafficRoutingTests.cs in your tests project.
+
+2. **Create your new test method**
+
+```csharp
+[Fact] 
+ public void TestRequestCount_ShouldReturnCorrectRequestCount()
+```
+
+Note that `Fact` attribute indicates to the Xunit Framework that this is a Unit Test.
+
+3. **Reference your InfraSim Project**
+
+If you instantiate the `TrafficRouting`, you get an error! To access the `InfraSim` project in the test project, you must add a reference to the main project.
+
+```bash
+dotnet add InfraSim.Tests/InfraSim.Tests.csproj reference InfraSim/InfraSim.csproj
+```
+
+Verify if your `InfraSim.Tests.csproj` has a reference to the `InfraSim` project.
+
+
+4. **Create your Unit Test**
+
+Providing an example of your first test:
+
+```csharp
+    TrafficRouting trafficRouting = new TrafficRouting(new List<IServer>());
+    Assert.Equal(100, trafficRouting.CalculateRequests(100));
+```
+
+The `Assert` will verify if the specific expectations are valid. If they aren't, the test will fail and will show in the test report.
 
 
 ### 🏁  Commit Your Changes
 
-## 3. Using Images
 
-Next, we need a component to display an image and the current number of users.
+## 5. Enhance Test Coverage Using Moq
 
-1. **Component Setup**  
-   - Create `Users.razor` and include an `<img>` tag for the user icon and a text element (like `<span>`) for the counter.  
-   - Move the user icon (e.g., `users.png`) into the `wwwroot/images` folder for proper static content usage:
-     ```razor
-     <img src="images/users.png" alt="Users" />
-     <span>@UserCount</span>
-     ```
-   - Create a parameter to receive the current user count from the parent:
-     ```csharp
-     [Parameter]
-     public int UserCount { get; set; }
-     ```
-   - In the parent component, pass the counter value to the `Users` component.
+You will need to test all the methods of the TrafficRouting. 
+For some of the tests, you’ll need IServer instances, which do not exist. You can achieve this using Moq.
 
-2. **Style the Component**  
-   - In `Users.razor.css`, create a `.div-container` class with a column layout, and apply it to the top-level `<div>` of your component:
-     ```css
-     .div-container {
-       display: flex;
-       flex-direction: column;
-       /* additional styling */
-     }
-     ```
-   - Create additional classes to control the image size and text appearance (e.g., font weight, size).
+1. **Add Moq to your Test Project**
 
-3. **Clean Up Old Display**  
-   - Remove or comment out any old display logic (like the counter from the previous class) that’s no longer needed.
+Please add Moq to your Test project by running the following command. Go to your tests project and perform the following command:
 
-### 🏁  Commit Your Changes
+```bash
+dotnet add package Moq
+```
 
-## 4. Prepare the Servers Panel Layout
+2. **Create a Mock instance**
 
-Currently, `Users` and `Actions` take up the entire width. We want to reduce their space and prepare room for a servers panel.
+Now you can create a Mock instance of IServer as the following:
 
-1. **Create a Parent Container**  
-   - In your main Razor page, wrap the `Actions` and `Users` components in a `<div>` (parent container).  
-   - Inside this parent container, create two child `<div>`s—one for the control panel (containing `Actions` and `Users`) and one for the servers panel (which we will create next).  
-   - Apply a display of `flex` to the parent container, set `flex-direction` to `row`, and specify a width for the control panel to reduce its overall size. For example:
-     
+```csharp
+Mock<IServer> server1 = new Mock<IServer>();
+```
 
-### 🏁  Commit Your Changes
+3. **Test your ObtainServers method**
 
-## 5. Add the Servers
+Now, you can verify if `ObtainServers` are returning the expected servers.
 
-We will track the number of servers and display them in a servers panel.
+4. **Test your Server distribution**
 
-1. **Create and Configure `Server.razor`**  
-   - Create a `Server.razor` component that displays a server image and a label, similar to how you created `Users.razor`.  
-   - Use the provided `Server.png` image (place it in your `wwwroot/images` folder).
+At last, check if the logic for server distribution is as expected.
 
-2. **Increment Servers**  
-   - In the main component, declare a variable to hold the server count.  
-   - Create a method to handle adding servers (incrementing this count).  
-   - Pass this method as a parameter to the `Actions` component (similar to how you did for the `Start` button) if you want to trigger server additions from the same set of actions.
 
-3. **Display Servers**  
-   - In the parent (main) component, use a loop to render the correct number of `Server` components:
-     ```razor
-     @for (int i = 0; i < ServerCount; i++)
-     {
-       <Server />
-     }
-     ```
-   - Place them inside the servers panel `<div>`.
-   - Use the `flex-wrap` property to allow the servers row to have multiple lines
+**Tip** You can create a Verify on a mock server and check if a method is called with an expected parameter:
 
-With these steps, you will have:
-
-- A structured Blazor Server application using Razor components (`Actions`, `Users`, and `Server`).
-- A layout divided into a **control panel** and a **servers panel**.
-- CSS classes to style and position these components appropriately.
+```csharp
+mockServer1.Verify(s => s.HandleRequests(expectedRequestsPerServer1), Times.Once);
+```
 
 ### 🏁  Commit Your Changes
 
 ## Final Reminder
 
-**⚠️ Don't Forget:** Once you have completed all parts of the assignment, push your code to **this** remote repository.
+**⚠️ Don't Forget:** Push your code to this assignment remote repository once you have completed all parts of the assignment. This assignment is designed to help you understand interface design, class implementation, and unit testing with mocking.
 
-Good luck, and have fun building your enhanced Blazor application! Use these guidelines and tips to build your solution. Remember, the goal is to experiment, raise questions and learn by doing.
+Good luck, and enjoy building your Traffic Routing Infrastructure! Use these guidelines to structure your solution, and feel free to experiment and ask questions as you work through the assignment.
