@@ -1,10 +1,29 @@
 ﻿@page "/"
 @using InfraSim.Pages
 
+<style>
+    .container {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+    }
+
+    .control-panel {
+        width: 200px;
+    }
+</style>
+
 <h1>Counter</h1> 
 
-<Users UserCount="@userCounter.Counter" />
-<Actions StartPressed="@StartIncrementing" />
+<div class="container">
+    <div class="control-panel">
+        <Users UserCount="@userCounter.Counter" />
+        <Actions StartPressed="@StartIncrementing" />
+    </div>
+    <div class="servers-panel">
+        @* Server components will be added here *@
+    </div>
+</div>
 
 @code {
     private UserCounter userCounter = new UserCounter();
