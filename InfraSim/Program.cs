@@ -36,6 +36,10 @@ namespace InfraSim
             
             Console.WriteLine("\n");
             
+            CapabilityFactoryDemo.Run();
+            
+            Console.WriteLine("\n");
+            
             Demo.RunCDNRoutingDemo();
             
             Console.WriteLine("\n");

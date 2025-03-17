@@ -5,10 +5,18 @@ namespace InfraSim.Models
     public class Server : IServer
     {
         private int _handledRequests;
+        private static readonly ICapabilityFactory _capabilityFactory = new CapabilityFactory();
         
         public Server()
         {
             Capability = new ServerCapability();
+        }
+        
+        public Server(ServerType type, string name)
+        {
+            Type = type;
+            Name = name;
+            Capability = _capabilityFactory.Create(type);
         }
         
         public ServerType Type { get; set; }
