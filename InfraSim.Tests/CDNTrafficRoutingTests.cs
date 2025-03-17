@@ -8,7 +8,7 @@ namespace InfraSim.Tests
     public class CDNTrafficRoutingTests
     {
         [Fact]
-        public void CDNTrafficPercentage_ShouldReturn70Percent()
+        public void CDNTrafficPercentage_ShouldReturnCorrectValue()
         {
             var routing = new CDNTrafficRouting();
             
@@ -16,7 +16,7 @@ namespace InfraSim.Tests
         }
         
         [Fact]
-        public void RemainingTrafficPercentage_ShouldReturn30Percent()
+        public void RemainingTrafficPercentage_ShouldReturnCorrectValue()
         {
             var routing = new CDNTrafficRouting();
             
@@ -24,7 +24,30 @@ namespace InfraSim.Tests
         }
         
         [Fact]
-        public void SendRequestsToServers_WithCDNServers_ShouldRoute70PercentToCDNs()
+        public void ObtainServers_ShouldPrioritizeCDNServers()
+        {
+            var cdnServer = new Mock<IServer>();
+            cdnServer.Setup(s => s.Type).Returns(ServerType.CDN);
+            
+            var loadBalancer = new Mock<IServer>();
+            loadBalancer.Setup(s => s.Type).Returns(ServerType.LoadBalancer);
+            
+            var webServer = new Mock<IServer>();
+            webServer.Setup(s => s.Type).Returns(ServerType.WebServer);
+            
+            var servers = new List<IServer> { webServer.Object, loadBalancer.Object, cdnServer.Object };
+            var routing = new CDNTrafficRouting(servers);
+            
+            var obtainServersMethod = typeof(CDNTrafficRouting).GetMethod("ObtainServers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var result = (List<IServer>)obtainServersMethod.Invoke(routing, null);
+            
+            Assert.Equal(cdnServer.Object, result[0]);
+            Assert.Equal(loadBalancer.Object, result[1]);
+            Assert.Equal(webServer.Object, result[2]);
+        }
+        
+        [Fact]
+        public void SendRequestsToServers_WithCDNServers_ShouldSend70PercentToCDN()
         {
             var cdnServer = new Mock<IServer>();
             cdnServer.Setup(s => s.Type).Returns(ServerType.CDN);
@@ -42,7 +65,7 @@ namespace InfraSim.Tests
         }
         
         [Fact]
-        public void SendRequestsToServers_WithoutCDNServers_ShouldRouteAllTrafficToLoadBalancers()
+        public void SendRequestsToServers_WithoutCDNServers_ShouldSendAllTrafficToLoadBalancers()
         {
             var loadBalancer = new Mock<IServer>();
             loadBalancer.Setup(s => s.Type).Returns(ServerType.LoadBalancer);
@@ -60,25 +83,25 @@ namespace InfraSim.Tests
         }
         
         [Fact]
-        public void SendRequestsToServers_WithoutCDNsOrLoadBalancers_ShouldRouteAllTrafficToOtherServers()
+        public void SendRequestsToServers_WithoutCDNAndLoadBalancers_ShouldSendAllTrafficToOtherServers()
         {
-            var webServer = new Mock<IServer>();
-            webServer.Setup(s => s.Type).Returns(ServerType.WebServer);
+            var webServer1 = new Mock<IServer>();
+            webServer1.Setup(s => s.Type).Returns(ServerType.WebServer);
             
-            var dbServer = new Mock<IServer>();
-            dbServer.Setup(s => s.Type).Returns(ServerType.DatabaseServer);
+            var webServer2 = new Mock<IServer>();
+            webServer2.Setup(s => s.Type).Returns(ServerType.WebServer);
             
-            var servers = new List<IServer> { webServer.Object, dbServer.Object };
+            var servers = new List<IServer> { webServer1.Object, webServer2.Object };
             var routing = new CDNTrafficRouting(servers);
             
             routing.RouteTraffic(100);
             
-            webServer.Verify(s => s.HandleRequests(50), Times.Once);
-            dbServer.Verify(s => s.HandleRequests(50), Times.Once);
+            webServer1.Verify(s => s.HandleRequests(50), Times.Once);
+            webServer2.Verify(s => s.HandleRequests(50), Times.Once);
         }
         
         [Fact]
-        public void SendRequestsToServers_WithMultipleCDNs_ShouldDistributeEvenlyAmongCDNs()
+        public void SendRequestsToServers_WithMultipleCDNServers_ShouldDistributeEvenlyAmongCDNServers()
         {
             var cdn1 = new Mock<IServer>();
             cdn1.Setup(s => s.Type).Returns(ServerType.CDN);
@@ -102,10 +125,22 @@ namespace InfraSim.Tests
         [Fact]
         public void SendRequestsToServers_WithEmptyServerList_ShouldNotThrowException()
         {
-            var routing = new CDNTrafficRouting(new List<IServer>());
+            var routing = new CDNTrafficRouting();
             
             var exception = Record.Exception(() => routing.RouteTraffic(100));
             Assert.Null(exception);
+        }
+        
+        [Fact]
+        public void CalculateRequests_ShouldReturnInputValue()
+        {
+            var routing = new CDNTrafficRouting();
+            int requestCount = 100;
+            
+            var calculateRequestsMethod = typeof(TrafficRouting).GetMethod("CalculateRequests", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var result = (int)calculateRequestsMethod.Invoke(routing, new object[] { requestCount });
+            
+            Assert.Equal(requestCount, result);
         }
     }
 } 

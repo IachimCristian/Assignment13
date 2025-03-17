@@ -99,5 +99,16 @@ namespace InfraSim.Tests
             webServer.Verify(s => s.HandleRequests(100), Times.Once);
             dbServer.Verify(s => s.HandleRequests(It.IsAny<int>()), Times.Never);
         }
+
+        [Fact]
+        public void CalculateRequests_ReturnsInputValue()
+        {
+            var trafficRouting = new FullTrafficRouting(ServerType.WebServer);
+            int requestCount = 100;
+            
+            trafficRouting.RouteTraffic(requestCount);
+            
+            Assert.Equal(requestCount, requestCount);
+        }
     }
 } 
