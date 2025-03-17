@@ -28,6 +28,10 @@ namespace InfraSim
             Console.WriteLine("Running InfraSim Demos");
             Console.WriteLine("======================\n");
             
+            ServerCapabilityDemo.RunBasicServerCapabilityDemo();
+            
+            Console.WriteLine("\n");
+            
             Demo.RunCDNRoutingDemo();
             
             Console.WriteLine("\n");

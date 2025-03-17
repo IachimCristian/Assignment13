@@ -150,21 +150,4 @@ namespace InfraSim.Models
             Console.WriteLine("\n=== Factory Demo Complete ===");
         }
     }
-    
-    public class Server : IServer
-    {
-        private int _handledRequests;
-        
-        public ServerType Type { get; set; }
-        
-        public string Name { get; set; }
-        
-        public int HandledRequests => _handledRequests;
-        
-        public void HandleRequests(int requestsCount)
-        {
-            _handledRequests += requestsCount;
-            Console.WriteLine($"{Name} ({Type}) handled {requestsCount} requests. Total: {_handledRequests}");
-        }
-    }
 } 

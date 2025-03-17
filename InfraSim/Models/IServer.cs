@@ -4,6 +4,8 @@ namespace InfraSim.Models
     {
         ServerType Type { get; }
 
+        IServerCapability Capability { get; }
+
         void HandleRequests(int requestsCount);
     }
 } 
