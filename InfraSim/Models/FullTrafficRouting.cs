@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace InfraSim.Models
 {
-    public class FullTrafficRouting : AbstractTrafficRouting
+    public class FullTrafficRouting : TrafficRouting
     {
         private readonly ServerType _targetServerType;
 
@@ -21,7 +21,7 @@ namespace InfraSim.Models
 
         protected override List<IServer> ObtainServers()
         {
-            var allServers = base.ObtainServers();
+            var allServers = Servers;
             
             var targetServers = allServers.Where(s => s.Type == _targetServerType).ToList();
             var otherServers = allServers.Where(s => s.Type != _targetServerType).ToList();

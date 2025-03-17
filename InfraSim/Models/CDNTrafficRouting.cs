@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace InfraSim.Models
 {
-    public class CDNTrafficRouting : AbstractTrafficRouting
+    public class CDNTrafficRouting : TrafficRouting
     {
         private const double CDN_TRAFFIC_PERCENTAGE = 0.7; 
         private const double REMAINING_TRAFFIC_PERCENTAGE = 0.3; 
@@ -19,8 +19,7 @@ namespace InfraSim.Models
 
         protected override List<IServer> ObtainServers()
         {
-
-            var allServers = base.ObtainServers();
+            var allServers = Servers;
             
             var cdnServers = allServers.Where(s => s.Type == ServerType.CDN).ToList();
             var loadBalancers = allServers.Where(s => s.Type == ServerType.LoadBalancer).ToList();

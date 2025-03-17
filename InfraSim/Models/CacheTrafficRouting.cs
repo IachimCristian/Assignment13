@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace InfraSim.Models
 {
-    public class CacheTrafficRouting : AbstractTrafficRouting
+    public class CacheTrafficRouting : TrafficRouting
     {
         private const double CACHE_TRAFFIC_PERCENTAGE = 0.5;
         private const double REMAINING_TRAFFIC_PERCENTAGE = 0.5;
@@ -18,7 +18,7 @@ namespace InfraSim.Models
 
         protected override List<IServer> ObtainServers()
         {
-            var allServers = base.ObtainServers();
+            var allServers = Servers;
             
             var cacheServers = allServers.Where(s => s.Type == ServerType.CacheServer).ToList();
             var loadBalancers = allServers.Where(s => s.Type == ServerType.LoadBalancer).ToList();

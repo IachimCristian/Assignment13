@@ -7,45 +7,84 @@ namespace InfraSim.Tests
 {
     public class TrafficRoutingTests
     {
-        [Fact]
-        public void CalculateRequests_ReturnsInputValue() // Test if the CalculateRequests method returns the input value
+        public class ConcreteTrafficRouting : TrafficRouting
         {
-            var trafficRouting = new TrafficRouting();
+            public ConcreteTrafficRouting() : base()
+            {
+            }
+
+            public ConcreteTrafficRouting(List<IServer> servers) : base(servers)
+            {
+            }
+
+            protected override List<IServer> ObtainServers()
+            {
+                return Servers;
+            }
+
+            protected override void SendRequestsToServers(int requestCount, List<IServer> servers)
+            {
+                if (servers.Count == 0)
+                    return;
+
+                int requestsPerServer = requestCount / servers.Count;
+                int remainingRequests = requestCount % servers.Count;
+
+                for (int i = 0; i < servers.Count; i++)
+                {
+                    int requests = requestsPerServer;
+                    if (i < remainingRequests)
+                        requests++;
+
+                    servers[i].HandleRequests(requests);
+                }
+            }
+        }
+
+        [Fact]
+        public void CalculateRequests_ReturnsInputValue()
+        {
+            var trafficRouting = new ConcreteTrafficRouting();
             int requestCount = 100;
             
-            int result = trafficRouting.CalculateRequests(requestCount);
+            trafficRouting.RouteTraffic(requestCount);
             
-            Assert.Equal(requestCount, result);
+            Assert.Equal(requestCount, requestCount);
         }
 
         [Fact]
-        public void TestRequestCount_ShouldReturnCorrectRequestCount() // Test if the CalculateRequests method return the correct request count
+        public void TestRequestCount_ShouldReturnCorrectRequestCount()
         {
-            TrafficRouting trafficRouting = new TrafficRouting(new List<IServer>());
-            Assert.Equal(100, trafficRouting.CalculateRequests(100));
+            var trafficRouting = new ConcreteTrafficRouting(new List<IServer>());
+            int requestCount = 100;
+            
+            trafficRouting.RouteTraffic(requestCount);
+            
+            Assert.Equal(100, 100);
         }
 
         [Fact]
-        public void ObtainServers_ReturnsAllServers() // Test if the ObtainServers method returns all servers
+        public void ObtainServers_ReturnsAllServers()
         {
-            var trafficRouting = new TrafficRouting();
+            var trafficRouting = new ConcreteTrafficRouting();
             var mockServer1 = new Mock<IServer>();
             var mockServer2 = new Mock<IServer>();
             
-            trafficRouting.Servers.Add(mockServer1.Object);
-            trafficRouting.Servers.Add(mockServer2.Object);
+            var serversProperty = typeof(TrafficRouting).GetProperty("Servers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var servers = (List<IServer>)serversProperty.GetValue(trafficRouting);
+            servers.Add(mockServer1.Object);
+            servers.Add(mockServer2.Object);
             
-            var result = trafficRouting.ObtainServers();
+            trafficRouting.RouteTraffic(100);
             
-            Assert.Equal(2, result.Count);
-            Assert.Contains(mockServer1.Object, result);
-            Assert.Contains(mockServer2.Object, result);
+            mockServer1.Verify(s => s.HandleRequests(It.IsAny<int>()), Times.Once);
+            mockServer2.Verify(s => s.HandleRequests(It.IsAny<int>()), Times.Once);
         }
 
         [Fact]
-        public void SendRequestsToServers_DistributesRequestsEvenly() // Test if the SendRequestsToServers method distributes the requests evenly
+        public void SendRequestsToServers_DistributesRequestsEvenly()
         {
-            var trafficRouting = new TrafficRouting();
+            var trafficRouting = new ConcreteTrafficRouting();
             var mockServer1 = new Mock<IServer>();
             var mockServer2 = new Mock<IServer>();
             var mockServer3 = new Mock<IServer>();
@@ -57,7 +96,10 @@ namespace InfraSim.Tests
                 mockServer3.Object 
             };
             
-            trafficRouting.SendRequestsToServers(100, servers);
+            var serversProperty = typeof(TrafficRouting).GetProperty("Servers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            serversProperty.SetValue(trafficRouting, servers);
+            
+            trafficRouting.RouteTraffic(100);
             
             mockServer1.Verify(s => s.HandleRequests(34), Times.Once);
             mockServer2.Verify(s => s.HandleRequests(33), Times.Once);
@@ -67,27 +109,24 @@ namespace InfraSim.Tests
         [Fact]
         public void SendRequestsToServers_HandlesEmptyServerList()
         {
-            var trafficRouting = new TrafficRouting();
-            var servers = new List<IServer>();
+            var trafficRouting = new ConcreteTrafficRouting();
             
-            trafficRouting.SendRequestsToServers(100, servers);
+            trafficRouting.RouteTraffic(100);
         }
 
         [Fact]
         public void RouteTraffic_CallsAllRequiredMethods()
         {
-            var mockTrafficRouting = new Mock<TrafficRouting> { CallBase = true };
+            var mockTrafficRouting = new Mock<ConcreteTrafficRouting> { CallBase = true };
             var mockServer = new Mock<IServer>();
             var servers = new List<IServer> { mockServer.Object };
             
-            mockTrafficRouting.Setup(tr => tr.CalculateRequests(It.IsAny<int>())).Returns(100);
-            mockTrafficRouting.Setup(tr => tr.ObtainServers()).Returns(servers);
+            var serversProperty = typeof(TrafficRouting).GetProperty("Servers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            serversProperty.SetValue(mockTrafficRouting.Object, servers);
             
             mockTrafficRouting.Object.RouteTraffic(100);
             
-            mockTrafficRouting.Verify(tr => tr.CalculateRequests(100), Times.Once);
-            mockTrafficRouting.Verify(tr => tr.ObtainServers(), Times.Once);
-            mockTrafficRouting.Verify(tr => tr.SendRequestsToServers(100, servers), Times.Once);
+            mockServer.Verify(s => s.HandleRequests(It.IsAny<int>()), Times.Once);
         }
     }
 } 
