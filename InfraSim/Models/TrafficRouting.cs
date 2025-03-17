@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace InfraSim.Models
 {
-    public abstract class TrafficRouting : ITrafficRouting
+    public abstract class TrafficRouting : ITrafficRouting // Abstract class for traffic routing
     {
-        protected List<IServer> Servers { get; private set; }
+        protected List<IServer> Servers { get; private set; } // List of servers to route traffic to 
 
         protected TrafficRouting()
         {
