@@ -6,6 +6,11 @@ namespace InfraSim.Models
     public interface IServer
     {
         /// <summary>
+        /// Gets the type of server
+        /// </summary>
+        ServerType Type { get; }
+
+        /// <summary>
         /// Handles a specified number of requests
         /// </summary>
         /// <param name="requestsCount">The number of requests to handle</param>
