@@ -8,7 +8,7 @@ namespace InfraSim.Tests
     public class CDNTrafficRoutingTests
     {
         [Fact]
-        public void CDNTrafficPercentage_ShouldReturnCorrectValue()
+        public void CDNTrafficPercentage_ShouldReturnCorrectValue() // Test to check if the CDN traffic Percentage is correct
         {
             var routing = new CDNTrafficRouting();
             
@@ -16,7 +16,7 @@ namespace InfraSim.Tests
         }
         
         [Fact]
-        public void RemainingTrafficPercentage_ShouldReturnCorrectValue()
+        public void RemainingTrafficPercentage_ShouldReturnCorrectValue() // Test to check if Remaining Traffic Percentage is correct
         {
             var routing = new CDNTrafficRouting();
             
@@ -24,7 +24,7 @@ namespace InfraSim.Tests
         }
         
         [Fact]
-        public void ObtainServers_ShouldPrioritizeCDNServers()
+        public void ObtainServers_ShouldPrioritizeCDNServers() // Test to check is the CDN servers are prioritized 
         {
             var cdnServer = new Mock<IServer>();
             cdnServer.Setup(s => s.Type).Returns(ServerType.CDN);
@@ -47,7 +47,7 @@ namespace InfraSim.Tests
         }
         
         [Fact]
-        public void SendRequestsToServers_WithCDNServers_ShouldSend70PercentToCDN()
+        public void SendRequestsToServers_WithCDNServers_ShouldSend70PercentToCDN() // Test to check if 70% of the traffic is sent to the CDN servers 
         {
             var cdnServer = new Mock<IServer>();
             cdnServer.Setup(s => s.Type).Returns(ServerType.CDN);
