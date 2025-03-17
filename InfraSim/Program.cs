@@ -32,6 +32,10 @@ namespace InfraSim
             
             Console.WriteLine("\n");
             
+            ServerCapabilityDemo.RunDecoratorPatternDemo();
+            
+            Console.WriteLine("\n");
+            
             Demo.RunCDNRoutingDemo();
             
             Console.WriteLine("\n");
