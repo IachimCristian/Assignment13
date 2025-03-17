@@ -50,6 +50,25 @@ namespace InfraSim.Models
             var fullFeatured = new SecurityCapability(new RedundancyCapability(new HighPerformanceCapability(baseCapability)));
             Console.WriteLine($"Full Featured (High Perf + Redundancy + Security) - Maximum Requests: {fullFeatured.MaximumRequests}, Cost: ${fullFeatured.Cost}");
             
+            Console.WriteLine("\n=== Additional Capabilities ===");
+            
+            var temporaryStorageCapability = new TemporaryStorageCapability(baseCapability);
+            Console.WriteLine($"Temporary Storage - Maximum Requests: {temporaryStorageCapability.MaximumRequests}, Cost: ${temporaryStorageCapability.Cost}");
+            
+            var trafficDistributionCapability = new TrafficDistributionCapability(baseCapability);
+            Console.WriteLine($"Traffic Distribution - Maximum Requests: {trafficDistributionCapability.MaximumRequests}, Cost: ${trafficDistributionCapability.Cost}");
+            
+            var edgeServerCapability = new EdgeServerCapability(baseCapability);
+            Console.WriteLine($"Edge Server - Maximum Requests: {edgeServerCapability.MaximumRequests}, Cost: ${edgeServerCapability.Cost}");
+            
+            Console.WriteLine("\n=== Combined Additional Capabilities ===");
+            
+            var edgeWithHighPerformance = new EdgeServerCapability(new HighPerformanceCapability(baseCapability));
+            Console.WriteLine($"Edge Server + High Performance - Maximum Requests: {edgeWithHighPerformance.MaximumRequests}, Cost: ${edgeWithHighPerformance.Cost}");
+            
+            var distributedEdgeServer = new TrafficDistributionCapability(new EdgeServerCapability(baseCapability));
+            Console.WriteLine($"Traffic Distribution + Edge Server - Maximum Requests: {distributedEdgeServer.MaximumRequests}, Cost: ${distributedEdgeServer.Cost}");
+            
             Console.WriteLine("\nTesting servers with decorated capabilities:");
             
             var basicServer = new Server
@@ -73,12 +92,30 @@ namespace InfraSim.Models
                 Capability = fullFeatured
             };
             
+            var edgeServer = new Server
+            {
+                Name = "Edge Computing Server",
+                Type = ServerType.WebServer,
+                Capability = edgeServerCapability
+            };
+            
+            var distributionServer = new Server
+            {
+                Name = "Traffic Distribution Server",
+                Type = ServerType.LoadBalancer,
+                Capability = trafficDistributionCapability
+            };
+            
             int requestCount = 1200;
             Console.WriteLine($"\nSending {requestCount} requests to each server:");
             
             basicServer.HandleRequests(requestCount);
             highPerfServer.HandleRequests(requestCount);
             fullFeaturedServer.HandleRequests(requestCount);
+            
+            Console.WriteLine("\nSending appropriate requests to specialized servers:");
+            edgeServer.HandleRequests(1000);
+            distributionServer.HandleRequests(9000);
             
             Console.WriteLine("\n=== Demo Complete ===");
         }
