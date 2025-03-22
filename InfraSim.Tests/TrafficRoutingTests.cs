@@ -11,12 +11,12 @@ namespace InfraSim.Tests
         [Fact]
         public void CalculateRequests_ReturnsInputValue() // Test if the CalculateRequests method returns the input value
         {
-            var trafficRouting = new FullTrafficRouting(ServerType.Server);
-            int requestCount = 100;
+            var trafficRouting = new FullTrafficRouting(ServerType.Server); // Create a new FullTrafficRouting object 
+            int requestCount = 100; // Set the request count to 100 
             
-            int result = trafficRouting.CalculateRequests(requestCount);
+            int result = trafficRouting.CalculateRequests(requestCount); // Call the CalculateRequests method with the request count and store the result in the result variable 
             
-            Assert.Equal(requestCount, result);
+            Assert.Equal(requestCount, result); // Assert that the result is equal to the request count 
         }
 
         [Fact]
