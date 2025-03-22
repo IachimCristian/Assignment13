@@ -5,7 +5,12 @@ namespace InfraSim.Routing
 {
     public abstract class TrafficRouting : ITrafficRouting
     {
-        public List<IServer> Servers { get; private set; }
+        public List<IServer> Servers { get; set; }
+
+        protected TrafficRouting()
+        {
+            Servers = new List<IServer>();
+        }
 
         public void RouteTraffic(int requestCount)
         {
