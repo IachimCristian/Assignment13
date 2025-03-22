@@ -1,6 +1,27 @@
 ﻿@page "/"
 @using InfraSim.Pages
 
+<style>
+    .container {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+        padding: 20px;
+    }
+
+    .control-panel {
+        width: 140px;
+    }
+
+    .servers-panel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 16px;
+        flex: 1;
+    }
+</style>
+
 <div class="container">
     <div class="control-panel">
         <Actions StartPressed="@StartIncrementing" AddPressed="@AddServer" />
