@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace InfraSim.Tests
 {
-    public class TrafficRoutingTests
+    public class FullTrafficRoutingTests
     {
         [Fact]
         public void CalculateRequests_ReturnsInputValue() // Test if the CalculateRequests method returns the input value
@@ -22,15 +22,15 @@ namespace InfraSim.Tests
         [Fact]
         public void TestRequestCount_ShouldReturnCorrectRequestCount() // Test if the CalculateRequests method return the correct request count
         {
-            var trafficRouting = new FullTrafficRouting(ServerType.Server);
-            Assert.Equal(100, trafficRouting.CalculateRequests(100));
+            var trafficRouting = new FullTrafficRouting(ServerType.Server); // Create a new FullTrafficRouting object
+            Assert.Equal(100, trafficRouting.CalculateRequests(100)); // Assert that the CalculateRequests method returns the correct request 
         }
 
         [Fact]
         public void ObtainServers_ReturnsAllServers() // Test if the ObtainServers method returns all servers
         {
-            var trafficRouting = new FullTrafficRouting(ServerType.Server);
-            var mockServer1 = new Mock<IServer>();
+            var trafficRouting = new FullTrafficRouting(ServerType.Server); // Create a new FullTrafficRouting object
+            var mockServer1 = new Mock<IServer>(); // Create a mock server object 
             var mockServer2 = new Mock<IServer>();
             
             mockServer1.Setup(s => s.ServerType).Returns(ServerType.Server);

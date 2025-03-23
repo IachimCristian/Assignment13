@@ -23,6 +23,15 @@ namespace InfraSim.Routing
 
         public abstract List<IServer> ObtainServers();
 
-        public abstract void SendRequestsToServers(int requestCount, List<IServer> servers);
+        public void SendRequestsToServers(int requestCount, List<IServer> servers)
+        {
+            if (servers.Count == 0) return;
+            
+            int requestsPerServer = requestCount / servers.Count;
+            foreach (var server in servers)
+            {
+                server.HandleRequests(requestsPerServer);
+            }
+        }
     }
 } 
