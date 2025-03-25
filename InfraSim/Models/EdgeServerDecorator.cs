@@ -4,7 +4,7 @@ namespace InfraSim.Models
     {
         public EdgeServerDecorator(IServerCapability capability) : base(capability) { }
 
-        public override long MaximumRequests => Capability.MaximumRequests * 1000;
-        public override int Cost => Capability.Cost + 50000;
+        public override long MaximumRequests => base.MaximumRequests * 1000;
+        public override int Cost => base.Cost + 50000;
     }
 } 
