@@ -4,7 +4,7 @@ namespace InfraSim.Models
     {
         public TemporaryStorageDecorator(IServerCapability capability) : base(capability) { }
 
-        public override long MaximumRequests => base.MaximumRequests * 100;
-        public override int Cost => base.Cost + 1000;
+        public override long MaximumRequests => Capability.MaximumRequests * 100;
+        public override int Cost => Capability.Cost + 1000;
     }
 } 

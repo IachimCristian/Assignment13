@@ -1,15 +1,15 @@
 namespace InfraSim.Models
 {
-    public class ServerCapabilityDecorator : IServerCapability
+    public abstract class ServerCapabilityDecorator : IServerCapability
     {
         protected IServerCapability Capability;
 
-        public ServerCapabilityDecorator(IServerCapability capability)
+        protected ServerCapabilityDecorator(IServerCapability capability)
         {
             Capability = capability;
         }
 
-        public virtual long MaximumRequests { get => Capability.MaximumRequests; }
-        public virtual int Cost { get => Capability.Cost; }
+        public abstract long MaximumRequests { get; }
+        public abstract int Cost { get; }
     }
 } 
