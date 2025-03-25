@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace InfraSim.Models
+namespace InfraSim.Models.Server
 {
     public interface ICluster : IServer
     {

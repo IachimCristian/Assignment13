@@ -1,6 +1,9 @@
 using System.Collections.Generic;
+using InfraSim.Models.State;
+using InfraSim.Models.Capability;
+using InfraSim.Models.Health;
 
-namespace InfraSim.Models
+namespace InfraSim.Models.Server
 {
     public abstract class BaseServer : IServer, IServerStateHandler
     {

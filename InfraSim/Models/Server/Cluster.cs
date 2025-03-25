@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using InfraSim.Models.State;
+using InfraSim.Models.Capability;
 
-namespace InfraSim.Models
+namespace InfraSim.Models.Server
 {
     public class Cluster : BaseServer, ICluster
     {

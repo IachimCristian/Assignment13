@@ -1,4 +1,4 @@
-namespace InfraSim.Models
+namespace InfraSim.Models.State
 {
     public interface IServerStateHandler
     {

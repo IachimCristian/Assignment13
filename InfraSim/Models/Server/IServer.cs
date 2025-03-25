@@ -1,4 +1,7 @@
-namespace InfraSim.Models
+using System.Collections.Generic;
+using InfraSim.Models.Capability;
+
+namespace InfraSim.Models.Server
 {
     /// <summary>
     /// Interface for server components that can handle requests

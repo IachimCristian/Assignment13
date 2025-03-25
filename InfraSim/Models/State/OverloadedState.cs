@@ -1,6 +1,9 @@
-namespace InfraSim.Models
+using InfraSim.Models.Server;
+using InfraSim.Models.Health;
+
+namespace InfraSim.Models.State
 {
-    public class NormalState : IServerState
+    public class OverloadedState : IServerState
     {
         public void Handle(IServer server)
         {
@@ -10,9 +13,9 @@ namespace InfraSim.Models
             {
                 ((IServerStateHandler)server).State = new IdleState();
             }
-            else if (healthCheck.IsOverloaded)
+            else if (healthCheck.IsNormal)
             {
-                ((IServerStateHandler)server).State = new OverloadedState();
+                ((IServerStateHandler)server).State = new NormalState();
             }
             else if (healthCheck.IsFailed)
             {

@@ -1,4 +1,4 @@
-namespace InfraSim.Models
+namespace InfraSim.Models.Capability
 {
     public abstract class ServerCapabilityDecorator : IServerCapability
     {

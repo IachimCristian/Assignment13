@@ -1,4 +1,4 @@
-namespace InfraSim.Models
+namespace InfraSim.Models.Server
 {
     public enum ServerType
     {

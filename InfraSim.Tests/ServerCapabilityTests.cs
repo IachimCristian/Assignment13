@@ -1,5 +1,6 @@
 using Xunit;
-using InfraSim.Models;
+using InfraSim.Models.Server;
+using InfraSim.Models.Capability;
 
 namespace InfraSim.Tests
 {

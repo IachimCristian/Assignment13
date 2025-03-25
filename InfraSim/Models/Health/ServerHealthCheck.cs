@@ -1,4 +1,7 @@
-namespace InfraSim.Models
+using InfraSim.Models.Server;
+using InfraSim.Models.Capability;
+
+namespace InfraSim.Models.Health
 {
     public class ServerHealthCheck : IServerHealthCheck
     {
