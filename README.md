@@ -1,141 +1,91 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/vBh8TXjn)
-# Assignment 5: Advanced Traffic Routing with Template Method
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/-pgplQ33)
+# Assignment 6: 
 
-In this assignment, you will extend your previous traffic routing simulation by implementing multiple types of traffic routing strategies. This work will give you the opportunity to:
+In this assignment, we continue to build our Infrastructure Simulator. Now, we are shifting our focus from Traffic Routing to Server Capabilities. Servers have distinct capacities and associated costs. We will use the Decorator Pattern to add capabilities flexibly and the Factory Pattern to streamline the creation of server configurations.
 
-1.	**Leverage Enums** to manage various server types required by each routing strategy
 
-2.	**Implement the Template Method pattern** to maintain a consistent structure while selectively overriding behavior for different routing strategies.
 
-3. **Enhance your unit testing skills** by expanding your test coverage.
+## Part 1: Establish the Basic Server Capability
 
-By the end of this assignment, you will have designed flexible and maintainable traffic routing systems customized for different server configurations, along with robust tests to validate your implementations.
+Implement a basic server capability that defines the default parameters for all servers.
 
-<div style="margin-top:80px;"></div>
+A server capability will have a standard 1000 Maximum Requests and a cost of $2500. 
+Implement the Server capability as it is shown in the next image:
 
-## Part 1: Managing Multiple Server Types
+![ServerCapability](Images/ServerCapability.png)
 
-Our Infrastructure Simulator will manage various types of servers:
+### 🏁  Commit Your Changes
+<br><br><br><br>
 
-- CDN
-- Load Balancer
-- Cache
-- Server
+## Part 2: Extend Using the Decorator Pattern
 
-### 1. Create an Enum for Server Types:
+We want to increase a server's maximum capability by adding other capabilities. This would be a good opportunity to use the Decorator Pattern.
 
-- Define an enum that handles the different types of servers.
+Create an implementation of the Decorator Pattern as displayed below:
 
-- [Learn more about enums](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/enum).
+![ServerCapabilityDecorator](Images/ServerCapabilityDecorator.png)
 
-### 2. Update the IServer Interface:
 
-- Add a ServerType property to your existing IServer interface.
+### 🏁  Commit Your Changes
+<br><br><br><br>
 
-![Server UML](Images/Server.png)
+## Part 3: Create Specific Capabilities Decorators
+
+Implement concrete decorators for each additional capability. These decorators will multiply the request capacity and add to the overall cost.
 
 <br>
+
+**Additional Capabilities:**
+
+| Capability          | Capacity  | Cost  |
+|---------------------|-----------|-------|
+| TemporaryStorage    |   100     | 1000  |
+| TrafficDistribution |   10000   | 1500  |
+| EdgeServer          |   1000    | 50000 |
+ 
+ <br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
 
-## Part 2: Understanding the InfraSim routing
+## Part 4: Construct a Server Capabilities Factory 
 
-For our Infrastrucuture Simulator, traffic flows as described in the diagram below:
-
-![Infrastructure Routing](Images/InfrastructureRouting.png)
-
-**Key Points:**
-
-- CDN and Cache Routing:
-
-  - Two distinct routing needs exist: one for CDNs and another for Caches.
-
-- Load Balancers and Servers:
-
-  - Thes will handle 100% of the remaining traffic. A generic approach can be applied here.
-
-### 1. Create classes for:
-
-- `CDNTrafficRouting`
-- `CacheTrafficRouting`
-- `FullTrafficRouting`
+Simplify and standardize the creation of server configurations by implementing a Factory Pattern.
 
 <br>
+
+**Server Types & Their Capabilities**
+
+| ServerType          | Capabilities                                                               | 
+|---------------------|----------------------------------------------------------------------------|
+| Server              |   ServerCapability                                                         |  
+| Cache               |   ServerCapability & TemporaryStorage                                      |
+| LoadBalancer        |   ServerCapability & TrafficDistribution                                   |
+| CDN                 |   ServerCapability & TemporaryStorage &  TrafficDistribution & Edge Server |
+
+
+<br>
+Create a factory that accepts a ServerType as input and returns the properly decorated server capability instance.
+
+<br>
+
+![Factory](Images/Factory.png)
+
+**Tip:** Use the *switch* syntax to simplify your code.
+
+
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
+## Part 5: Validate Your Implementation with Unit Tests
 
-## Part 3: Implementing the Template Method
-
-> Template Method is a behavioral design pattern that defines the skeleton of an algorithm in the superclass but lets subclasses override specific steps of the algorithm without changing its structure.
-
-
-### 1. Make `TrafficRouting` an abstract class.
-
-- Convert your TrafficRouting class into an abstract class.
-
-### 2. Define Abstract Methods
-
-- Identify and mark the methods that should be abstract, ensuring the subclasses will implement them.
-
-- **Note:** Abstract methods cannot have any implementation.
-
-### 3. Project Integrity:
-
-- Ensure your InfraSim project compiles without issues.
-
-- **Note:** we will not look into the tests project at this stage, even if failing.
-
-<br>
-
-### 🏁  Commit Your Changes
-<br><br><br><br>
+Implement the unit tests for the factory covering all cases and ensuring the expected cost and capacity is returned.
 
 
+**Tip:** Consider using a Theory (parameterized tests) to test multiple scenarios within a single test method.
 
-## Part 4: Implementing Specific Routing Behavior
-
-Now its time to implement the specs of each routing system.
-
-### 1. Subclass Implementation: 
-
-- Inherit `CDNTrafficRouting`, `CacheTrafficRouting` and `FullTrafficRouting` from the TrafficRouting abstract class.
-
-### 2. Implement Abstract Members:
-
-- Provide concrete implementations for the inherited abstract members according to the specifications.
-
-- **Tip** To query a List, consider using [Where method](https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.where?view=net-9.0#system-linq-enumerable-where-1(system-collections-generic-ienumerable((-0))-system-func((-0-system-boolean)))).
-
-- **Tip** FullTrafficRouting requires the server type, once it is a generic traffic and it does not know to which servers to send the traffic. You can use the constuctor to pass this parameter.
-
-<br>
-
-### 🏁  Commit Your Changes
-<br><br><br><br>
-
-
-
-## Part 5: Testing Your Implementation
-
-
-### 1. Review Existing Tests
-
-- Note that tests for TrafficRouting are now invalid because it’s abstract. Instead, reuse these tests for FullTrafficRouting by configuring the ServerType to Server.
-
-- **Tip** configure the ServerType of the IServer mock:
-```csharp
-mockServer.Setup(s => s.ServerType).Returns(ServerType.Server);
-```
-
-### 2. Create New Test Files
-
-- Write tests for `CDNTrafficRouting` and `CacheTrafficRouting`.
-
-<br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
@@ -144,6 +94,6 @@ mockServer.Setup(s => s.ServerType).Returns(ServerType.Server);
 
 # Final Reminder
 
-⚠️ Don’t Forget: Push your code to this assignment remote repository once you have completed all parts of the assignment. This assignment is designed to help you understand not only the Template Method design pattern but also interface design, class implementation, and unit testing with mocking.
+⚠️ Don’t Forget: Push your code to this assignment remote repository once you have completed all parts of the assignment. This assignment is designed to deepen your understanding of both the Decorator and Factory Patterns while improving your unit testing skills.
 
-Good luck, and enjoy building your Traffic Routing Infrastructure! Use these guidelines to structure your solution, and feel free to experiment and ask questions as you work through the assignment.
+Good luck, and enjoy building your Servers Capabilities! Use these guidelines to structure your solution, and feel free to experiment and ask questions as you work through the assignment.
