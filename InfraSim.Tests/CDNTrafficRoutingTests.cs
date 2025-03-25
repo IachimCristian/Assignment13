@@ -1,6 +1,7 @@
 using Xunit;
 using Moq;
 using InfraSim.Models;
+using InfraSim.Models.Server;
 using InfraSim.Routing;
 using System.Collections.Generic;
 
