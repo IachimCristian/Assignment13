@@ -11,15 +11,15 @@ namespace InfraSim.Models.State
             
             if (healthCheck.IsIdle)
             {
-                ((IServerStateHandler)server).State = new IdleState();
+                server.State = new IdleState();
             }
             else if (healthCheck.IsNormal)
             {
-                ((IServerStateHandler)server).State = new NormalState();
+                server.State = new NormalState();
             }
             else if (healthCheck.IsOverloaded)
             {
-                ((IServerStateHandler)server).State = new OverloadedState();
+                server.State = new OverloadedState();
             }
         }
     }
