@@ -12,21 +12,21 @@ namespace InfraSim.Models.Server
             : base(ServerType.Cluster, serverCapability)
         {
             Servers = new List<IServer>();
-        }
+        } // Cluster does not handle requests directly 
 
         public void AddServer(IServer server)
         {
             Servers.Add(server);
-        }
+        } // Cluster will not handle requests directly 
 
         public void RemoveServer(IServer server)
         {
             Servers.Remove(server);
-        }
+        } 
 
-        public override void HandleRequests(int requestsCount)
+        public override void HandleRequests(int requestsCount) // Cluster should not handle requests directly 
         {
-            RequestsCount = requestsCount;
+            RequestsCount = requestsCount; // RequestsCount is set to the number of requests received 
         }
     }
 } 
