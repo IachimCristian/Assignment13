@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using InfraSim.Models.Capability;
 using InfraSim.Models.Server;
+using InfraSim.Models.Mediator;
 
 namespace InfraSim
 {
@@ -30,6 +31,7 @@ namespace InfraSim
                     services.AddSingleton<IServerCapability, ServerCapability>();
                     services.AddSingleton<ICapabilityFactory, ServerCapability>();
                     services.AddSingleton<IServerFactory, ServerFactory>();
+                    services.AddSingleton<IInfrastructureMediator, InfrastructureMediator>();
                 });
     }
 }
