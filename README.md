@@ -1,165 +1,152 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/91RciJe8)
-# Assignment 7: Server Definition and State Management
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/BNj4BeP0)
+# Assignment 8: Builder, Factory Method, Mediator, Singleton and Dependency Injection
 
-In this assignment, you will extend your infrastructure simulation by implementing server clusters and state management using the Composite and State pattern. This work will give you the opportunity to:
+In this assignment, you will extend your previous infrastructure simulation by designing and implementing a flexible and modular server infrastructure. This work will give you the opportunity to:
 
-1. **Utilize the Composite Pattern** to handle both individual servers and clusters uniformly.
-2. **Implement the State Pattern** to track and update server load conditions dynamically.
-3. **Apply the Facade Pattern** to simplify server health checks.
-4. **Enhance Unit Testing** by increasing test coverage for state transitions and server load management.
+- Use the Builder Pattern for Server Creation
 
-By the end of this assignment, you will have developed a flexible and scalable server management system, complete with dynamic state transitions and robust testing.
+- Applying Singleton and Dependency Injection
 
+- Leveraging the Factory Method Pattern
 
+- Starting with the Mediator Pattern for Infrastructure Management
 
+By the end of this assignment, you will have a well structure and testable code to create your servers and shape your infrastructure.
 
+## Part 1: Create and build your server class.
 
-## Part 1: Update IServer and create Base Server
+- Create your Server class and extend from the BaseServer.
 
-- Add the ServerCapability and an integer Requests for representing the server current load.
-
-
-- Create an abstract BaseServer to populate the current load when HandleRequests is called. This will just hold the value of the amount of requests.
+As you can see there is a few arguments that needs to be passed. You can simplify its creation with the Builder Pattern.
 
 
+- Create the IServerBuilder with the methods to hold paramenters for the server.
+  - Type
+  - Capability
+  - State
 
-You can implement your RequestsCount such as:
-    
-```csharp
-    private int Requests = 0;
-    public int RequestsCount { 
-        get{
-            return Requests;
-        } 
-        set{
-            Requests = value;
-        }
-    }
-```
-- implement your HandleRequests method, which will set the RequestsCount.
-
-- Pass the missing values in a constructor, such as the ServerCapability or ServerType.
+  
+- Implement ServerBuilder that:
+  - Stores default values for ServerType, ServerCapability, and ServerState.
+  - Implements the builder methods, returning itself (this) to allow method chaining.
+  - Includes a Build() method to instantiate and return a Server object.
 
 <br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
-## Part 2: Create Your Cluster
+## Part 2: Use Singleton and Dependency Injection
 
-A server cluster is a group of interconnected servers that work together. This will help to build our infrastructure as shown in the image below:
+
+We will obtain server capabilities from CapabilitiesFactory. .NET provides a simple way to create singletons.
+
+- Register IServerCapability as a singleton in Program.cs.
+
+```csharp
+builder.Services.AddSingleton<IServerCapability, ServerCapability>();
+```
+
+
+
+<br>
+
+### 🏁  Commit Your Changes
+<br><br><br><br>
+
+## Part 3: Implement Factory Method for Server and Cluster Creation
+
+- Create your `IServerFactory` with different methods for each `ServerType` 
+
+- Create the concrete class `ServerFactory` implementing IServerFactory
+  
+- Use your previous Builder to generate the expected servers
+
+- The creation of the several Servers instance are very similar. Create a private method to avoid duplicated code.
+
+**Tip:** Inject the IServerCapability in order to optain the desired capability.
+
+The injection is performed within the constructor.
+Example:
+
+```csharp
+    public ServerFactory(ICapabilityFactory capabilityFactory)
+    {
+        CapabilityFactory = capabilityFactory;
+    }
+```
+
+**Hint:** Cluster will have a different creation. 
+
+- Register the new factory as singleton.
+
+<br>
+
+### 🏁  Commit Your Changes
+<br><br><br><br>
+
+# Part 4: Implement the Infrastructure Mediator Pattern
+
+The infrastructure must handle multiple aspects, like adding servers and processing clients requests. We'll use the Mediator Pattern.
+
+- Create the IInfrastructureMediator and the InfrastructureMediator class.
+
+- Implement InfrastructureMediator to manage server additions
+
+- Create the initial structure in the constructor, representing the two clusters from previous assignment.
 
 ![Cluster](Images/Cluster.png)
 
-This is a great opportunity to implement the Composite Pattern, as described in the next image:
-
-![Composite](Images/Composite.png)
-
-
-### 1. Define `ICluster` Interface:
-
-- Add methods to handle a list of servers.
-
-- Extend `ICluster` from `IServer`.
-
-### 2. Update your ServerType
-
-- Add Cluster to the `ServerType` Enum.
-
-### 3. Implement `Cluster` Class:
-
-- Extend it from `BaseServer` and implement `ICluster`.
-
-- Implement the required constructor and interface methods.
-
-**Tip:** You don't need the ServerType to be pass on `Cluster`'s constructor. Set it as Cluster when calling the base.
-
-
-
-<br>
-
-### 🏁  Commit Your Changes
-<br><br><br><br>
-
-## Part 3: Health Check with Facade
-
-Our server will have 4 states with the following characteristics:
-
-| State | Current Load (RequestsCount) |
-|-------|------------------------------|
-| Idle  | 0                            |
-| Normal | > 0 && < 80%                |
-| Overloaded | > 80% && < 100%         |
-| Failed | >= 100%                     |
-
-To avoid contaminating the server model with these calculations, we can implement a facade to provide a unified interface and perform its calculations.
-
-
-### Implement `IServerHealthCheck` & `ServerHealthCheck`:
-- Create an interface and implementation for server health checks.
-- **Tip:** Pass `IServer` in the constructor.
-
-![Facade](Images/Facade.png)
-
-<br>
-
-### 🏁  Commit Your Changes
-<br><br><br><br>
-
-## PArt 4: Build your State Management
-
-For the state management we will apply the State Design Pattern.
-
-
-
-### 2. Define `IServerState` and `IServerStateHandler`:
-- Keep state awareness separate from `IServer`.
-- Update `BaseServer` to include state awareness, modifying the constructor as needed.
-- Ensure `Cluster` handles state updates properly.
-
-
-### 3. Implement Concrete State Classes
-
-- Create the `IdleState`, `NormalState`, `OverloadedState`, and `FailedState`.
-- Implement the `Handle` method in each class to check the server's health and update the state.
-
-Example of Normal State:
 ```csharp
-public void Handle(IServer server)
-    {
-        ServerHealthCheck healthCheck = new ServerHealthCheck(server);
-        if(healthCheck.IsIdle){
-            server.State = new IdleState();
-        } 
-        else if(healthCheck.IsOverloaded){
-            server.State = new OverloadedState();
-        } 
-        else if(healthCheck.IsFailed){
-            server.State = new FailedState();
-        }
-    }
+public InfrastructureMediator(ServerFactory serverFactory)
+{
+    Gateway = serverFactory.CreateCluster();
+    Processors = serverFactory.CreateCluster();
+    Gateway.AddServer(Processors);
+}
 ```
 
+- Handle server addition following the representation from the last assignment. 
 
+```csharp
+public void AddServer(IServer server)
+{
+    switch (server.ServerType)
+    {
+        case ServerType.CDN:
+        case ServerType.LoadBalancer:
+            Gateway.AddServer(server);
+            break;
+        case ServerType.Cache:
+        case ServerType.Server:
+            Processors.AddServer(server);
+            break;
+        
+    }`
+}
+```
 
-### 4. Modify `BaseServer`:
-- Call the state `Handle` on the state object whenever `RequestsCount` changes.
+- Register it as singleton for Dependency Injection usage.
 
-### State UML
-
-![State](Images/State.png)
 <br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
-## Part 5: Verify With Unit Tests
+## Part 5: Write Unit Tests
 
-### Increase Test Coverage:
+1. Create the tests for the Server Builder
 
-- Add tests for `ServerHealthCheck`.
+**Tip** 
+1. With the file selected, enter `/test` on your copilot prompt
+2. Select ApplyEdit
+3. Save in your InfraSim.Tests project
+4. You might need to fix some parts of the generated code.
 
-- Verify state transitions when modifying `RequestsCount`.
+2. Verify on your Infraastructur Mediator, if the servers are being added to the right Cluster.
+
+
+**Tip** Use the following prompt on copilot: `/tests creating a Moq for the ClusterFactory`
 
 <br>
 
@@ -167,6 +154,9 @@ public void Handle(IServer server)
 <br><br><br><br>
 
 # Final Reminder
-⚠️ Don’t forget to push your code to the assignment repository once all parts are complete. This assignment is designed to reinforce composite design principles, state management, and robust unit testing.
 
-Good luck, and enjoy building your server infrastructure!
+⚠️ Don’t Forget: Push your code to this assignment’s remote repository once you have completed all parts of the assignment. This exercise is designed to strengthen your understanding of key software architecture principles, including the Builder, Factory Method, Singleton, and Mediator design patterns.
+
+By completing this assignment, you will enhance your skills in modular system design, dependency injection, and unit testing. all essential for building scalable and maintainable software
+
+Good luck, and enjoy building your server infrastructure system! Follow the guidelines, experiment with different implementations, and don’t hesitate to ask questions as you refine your solution. 🚀
