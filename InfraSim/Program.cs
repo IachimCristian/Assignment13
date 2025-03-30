@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using InfraSim.Models.Capability;
+using InfraSim.Models.Server;
 
 namespace InfraSim
 {
@@ -21,6 +24,10 @@ namespace InfraSim
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddSingleton<IServerCapability, ServerCapability>();
                 });
     }
 }
