@@ -28,6 +28,8 @@ namespace InfraSim
                 .ConfigureServices((context, services) =>
                 {
                     services.AddSingleton<IServerCapability, ServerCapability>();
+                    services.AddSingleton<ICapabilityFactory, ServerCapability>();
+                    services.AddSingleton<IServerFactory, ServerFactory>();
                 });
     }
 }
