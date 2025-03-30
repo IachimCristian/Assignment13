@@ -6,10 +6,10 @@ using InfraSim.Models.Capability;
 
 namespace InfraSim.Tests
 {
-    public class ServerBuilderTests
+    public class ServerBuilderTests // Test class for ServerBuilder class 
     {
         [Fact]
-        public void Build_WithDefaultValues_CreatesServerWithCorrectDefaults()
+        public void Build_WithDefaultValues_CreatesServerWithCorrectDefaults() // Test method for Build method with default values 
         {            var mockCapability = new Mock<IServerCapability>();
             var builder = new ServerBuilder();
 
@@ -24,7 +24,7 @@ namespace InfraSim.Tests
         }
 
         [Fact]
-        public void Build_WithCustomValues_CreatesServerWithSpecifiedValues()
+        public void Build_WithCustomValues_CreatesServerWithSpecifiedValues() // Test method for build method with custom values 
         {
             var mockCapability = new Mock<IServerCapability>();
             var mockState = new Mock<IServerState>();
@@ -43,7 +43,7 @@ namespace InfraSim.Tests
         }
 
         [Fact]
-        public void Build_SupportsMethodChaining()
+        public void Build_SupportsMethodChaining() // Test method for build method with method chaining 
         {
             var mockCapability = new Mock<IServerCapability>();
             var builder = new ServerBuilder();
