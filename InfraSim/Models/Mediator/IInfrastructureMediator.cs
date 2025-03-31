@@ -4,8 +4,8 @@ namespace InfraSim.Models.Mediator
 {
     public interface IInfrastructureMediator
     {
-        IServer Gateway { get; }
-        IServer Processors { get; }
+        ICluster Gateway { get; }
+        ICluster Processors { get; }
         void AddServer(IServer server);
     }
 } 
