@@ -6,6 +6,6 @@ namespace InfraSim.Models.Server
         IServer CreateCache();
         IServer CreateLoadBalancer();
         IServer CreateCDN();
-        IServer CreateCluster();
+        ICluster CreateCluster();
     }
 } 

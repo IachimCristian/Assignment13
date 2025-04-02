@@ -37,12 +37,12 @@ namespace InfraSim.Models.Server
             return CreateServerWithType(ServerType.LoadBalancer);
         }
 
-        public IServer CreateCDN()
+        public IServer CreateCDN() 
         {
             return CreateServerWithType(ServerType.CDN);
         }
 
-        public IServer CreateCluster()
+        public ICluster CreateCluster()
         {
             var capability = _capabilityFactory.Create(ServerType.Cluster);
             return new Cluster(capability);

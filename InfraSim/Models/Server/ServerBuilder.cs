@@ -5,21 +5,9 @@ namespace InfraSim.Models.Server
 {
     public class ServerBuilder : IServerBuilder
     {
-        private ServerType _type;
-        private IServerCapability _capability;
-        private IServerState _state;
-
-        public ServerBuilder()
-        {
-            Reset();
-        }
-
-        private void Reset()
-        {
-            _type = ServerType.Server;
-            _capability = null;
-            _state = new IdleState();
-        }
+        private ServerType _type = ServerType.Server;
+        private IServerCapability _capability = new ServerCapability();
+        private IServerState _state = new IdleState();
 
         public IServerBuilder WithType(ServerType type)
         {
@@ -43,7 +31,6 @@ namespace InfraSim.Models.Server
         {
             var server = new Server(_type, _capability);
             server.State = _state;
-            Reset();
             return server;
         }
     }
