@@ -43,7 +43,7 @@ namespace InfraSim.Tests
         }
 
         [Fact]
-        public void WhenAddingServersInDatabase_TheyAreNotStoredIfFailed()  
+        public void WhenAddingServersInDatabase_TheyAreNotStoredIfFailed() // Implemented the failing transaction test 
         {
             UnitOfWork.Rollback();
 
