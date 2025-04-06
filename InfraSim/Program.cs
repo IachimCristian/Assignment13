@@ -35,6 +35,7 @@ namespace InfraSim
                     services.AddSingleton<IServerFactory, ServerFactory>();
                     services.AddSingleton<IInfrastructureMediator, InfrastructureMediator>();
                     services.AddDbContext<InfraSimContext>();
+                    services.AddScoped<IRepositoryFactory, RepositoryFactory>();
                 });
     }
 }
