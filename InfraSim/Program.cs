@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using InfraSim.Models.Capability;
 using InfraSim.Models.Server;
 using InfraSim.Models.Mediator;
+using InfraSim.Models.Db;
+using Microsoft.EntityFrameworkCore;
 
 namespace InfraSim
 {
@@ -32,6 +34,7 @@ namespace InfraSim
                     services.AddSingleton<ICapabilityFactory, ServerCapability>();
                     services.AddSingleton<IServerFactory, ServerFactory>();
                     services.AddSingleton<IInfrastructureMediator, InfrastructureMediator>();
+                    services.AddDbContext<InfraSimContext>();
                 });
     }
 }
