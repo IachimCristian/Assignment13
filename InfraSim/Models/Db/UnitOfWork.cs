@@ -45,12 +45,11 @@ namespace InfraSim.Models.Db
             _serviceProvider = serviceProvider;
         }
 
-        // Internal constructor for testing
         internal UnitOfWork(InfraSimContext context, IRepositoryFactory repositoryFactory)
         {
             _context = context;
             _repositoryFactory = repositoryFactory;
-            _serviceProvider = null!; // Won't be used in testing scenario
+            _serviceProvider = null!;
         }
 
         public IRepository<TEntity> GetRepository<TEntity>() where TEntity : DbItem
