@@ -30,12 +30,13 @@ namespace InfraSim
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddSingleton<IServerCapability, ServerCapability>();
-                    services.AddSingleton<ICapabilityFactory, ServerCapability>();
-                    services.AddSingleton<IServerFactory, ServerFactory>();
+                    services.AddScoped<IServerCapability, ServerCapability>(); // Registers the server capability interface with a scoped lifetime 
+                    services.AddSingleton<ICapabilityFactory, ServerCapability>(); // Registers the capability factory as a singleton 
+                    services.AddSingleton<IServerFactory, ServerFactory>(); // Registers the server factory as a singleton 
                     services.AddSingleton<IInfrastructureMediator, InfrastructureMediator>();
                     services.AddDbContext<InfraSimContext>();
                     services.AddScoped<IRepositoryFactory, RepositoryFactory>();
+                    services.AddSingleton<IUnitOfWork, UnitOfWork>(); // Registers the unit of work as a singleton 
                 });
     }
 }
