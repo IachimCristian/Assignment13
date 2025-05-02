@@ -38,6 +38,7 @@ namespace InfraSim
                     services.AddScoped<IRepositoryFactory, RepositoryFactory>();
                     services.AddSingleton<IUnitOfWork, UnitOfWork>(); // Registers the unit of work as a singleton 
                     services.AddSingleton<IServerDataMapper, ServerDataMapper>();
+                    services.AddSingleton<ICommandManager, CommandManager>();
                 });
     }
 }

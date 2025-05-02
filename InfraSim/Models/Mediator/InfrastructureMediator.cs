@@ -6,25 +6,31 @@ namespace InfraSim.Models.Mediator
     {
         public ICluster Gateway { get; private set; }
         public ICluster Processors { get; private set; }
+        private readonly ICommandManager _commandManager;
+        private readonly IServerDataMapper _mapper;
 
-        public InfrastructureMediator(IServerFactory serverFactory) // For the InfrastructureMediator 
+        public InfrastructureMediator(IServerFactory serverFactory, ICommandManager commandManager, IServerDataMapper mapper) // For the InfrastructureMediator 
         {
             Gateway = serverFactory.CreateCluster();
             Processors = serverFactory.CreateCluster();
             Gateway.AddServer(Processors);
+            _commandManager = commandManager;
+            _mapper = mapper;
         }
 
         public void AddServer(IServer server) // For adding a server 
         {
             switch (server.ServerType)
             {
-                case ServerType.CDN: // In case the server is CDN 
+                case ServerType.CDN:
                 case ServerType.LoadBalancer:
-                    Gateway.AddServer(server);
+                    var addServerCommand = new AddServerCommand(Gateway, server, _mapper);
+                    _commandManager.Execute(addServerCommand);
                     break;
                 case ServerType.Cache:
                 case ServerType.Server:
-                    Processors.AddServer(server);
+                    addServerCommand = new AddServerCommand(Processors, server, _mapper);
+                    _commandManager.Execute(addServerCommand);
                     break;
             }
         }
