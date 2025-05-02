@@ -14,12 +14,14 @@ namespace InfraSim.Tests
             var mockFactory = new Mock<IServerFactory>();
             var mockGateway = new Mock<ICluster>();
             var mockProcessors = new Mock<ICluster>();
+            var mockCommandManager = new Mock<ICommandManager>();
+            var mockDataMapper = new Mock<IServerDataMapper>();
 
             var setupSequence = mockFactory.SetupSequence(f => f.CreateCluster());
             setupSequence.Returns(mockGateway.Object);
             setupSequence.Returns(mockProcessors.Object);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object);
+            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
 
             Assert.NotNull(mediator.Gateway);
             Assert.NotNull(mediator.Processors);
@@ -34,6 +36,8 @@ namespace InfraSim.Tests
             var mockGateway = new Mock<ICluster>();
             var mockProcessors = new Mock<ICluster>();
             var mockServer = new Mock<IServer>();
+            var mockCommandManager = new Mock<ICommandManager>();
+            var mockDataMapper = new Mock<IServerDataMapper>();
 
             var setupSequence = mockFactory.SetupSequence(f => f.CreateCluster());
             setupSequence.Returns(mockGateway.Object);
@@ -41,10 +45,10 @@ namespace InfraSim.Tests
             
             mockServer.Setup(s => s.ServerType).Returns(ServerType.CDN);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object);
+            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
             mediator.AddServer(mockServer.Object);
 
-            mockGateway.Verify(g => g.AddServer(mockServer.Object), Times.Once);
+            mockCommandManager.Verify(cm => cm.Execute(It.IsAny<AddServerCommand>()), Times.Once);
             mockProcessors.Verify(p => p.AddServer(It.IsAny<IServer>()), Times.Never);
         }
 
@@ -55,6 +59,8 @@ namespace InfraSim.Tests
             var mockGateway = new Mock<ICluster>();
             var mockProcessors = new Mock<ICluster>();
             var mockServer = new Mock<IServer>();
+            var mockCommandManager = new Mock<ICommandManager>();
+            var mockDataMapper = new Mock<IServerDataMapper>();
 
             var setupSequence = mockFactory.SetupSequence(f => f.CreateCluster());
             setupSequence.Returns(mockGateway.Object);
@@ -62,10 +68,10 @@ namespace InfraSim.Tests
             
             mockServer.Setup(s => s.ServerType).Returns(ServerType.LoadBalancer);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object);
+            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
             mediator.AddServer(mockServer.Object);
 
-            mockGateway.Verify(g => g.AddServer(mockServer.Object), Times.Once);
+            mockCommandManager.Verify(cm => cm.Execute(It.IsAny<AddServerCommand>()), Times.Once);
             mockProcessors.Verify(p => p.AddServer(It.IsAny<IServer>()), Times.Never);
         }
 
@@ -76,6 +82,8 @@ namespace InfraSim.Tests
             var mockGateway = new Mock<ICluster>();
             var mockProcessors = new Mock<ICluster>();
             var mockServer = new Mock<IServer>();
+            var mockCommandManager = new Mock<ICommandManager>();
+            var mockDataMapper = new Mock<IServerDataMapper>();
 
             var setupSequence = mockFactory.SetupSequence(f => f.CreateCluster());
             setupSequence.Returns(mockGateway.Object);
@@ -83,10 +91,10 @@ namespace InfraSim.Tests
             
             mockServer.Setup(s => s.ServerType).Returns(ServerType.Cache);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object);
+            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
             mediator.AddServer(mockServer.Object);
 
-            mockProcessors.Verify(p => p.AddServer(mockServer.Object), Times.Once);
+            mockCommandManager.Verify(cm => cm.Execute(It.IsAny<AddServerCommand>()), Times.Once);
             mockGateway.Verify(g => g.AddServer(mockServer.Object), Times.Never);
         }
 
@@ -97,6 +105,8 @@ namespace InfraSim.Tests
             var mockGateway = new Mock<ICluster>();
             var mockProcessors = new Mock<ICluster>();
             var mockServer = new Mock<IServer>();
+            var mockCommandManager = new Mock<ICommandManager>();
+            var mockDataMapper = new Mock<IServerDataMapper>();
 
             var setupSequence = mockFactory.SetupSequence(f => f.CreateCluster());
             setupSequence.Returns(mockGateway.Object);
@@ -104,10 +114,10 @@ namespace InfraSim.Tests
             
             mockServer.Setup(s => s.ServerType).Returns(ServerType.Server);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object);
+            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
             mediator.AddServer(mockServer.Object);
 
-            mockProcessors.Verify(p => p.AddServer(mockServer.Object), Times.Once);
+            mockCommandManager.Verify(cm => cm.Execute(It.IsAny<AddServerCommand>()), Times.Once);
             mockGateway.Verify(g => g.AddServer(mockServer.Object), Times.Never);
         }
     }
