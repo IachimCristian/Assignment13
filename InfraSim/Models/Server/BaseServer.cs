@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using InfraSim.Models.State;
 using InfraSim.Models.Capability;
@@ -7,6 +8,7 @@ namespace InfraSim.Models.Server
 {
     public abstract class BaseServer : IServer, IServerStateHandler
     {
+        public Guid Id { get; set; }
         private int Requests = 0;
         public int RequestsCount 
         {

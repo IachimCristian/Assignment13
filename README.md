@@ -1,110 +1,63 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/ftQ_uu23)
-# Assignment 9: Using Entity Framework, Repository, and Unit of Work with Generics
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/6vQaPKZ5)
+# Assignment 10: Data Persistence with Data Mapper, Proxy, and Command
 
-In this assignment, we will use Entity Framework for data persistence with SQLite. We will implement the **Repository** and **Unit of Work** patterns to manage database operations efficiently, while utilizing **generics** to make the repository system flexible and reusable.
+In this assignment, you will enhance your infrastructure simulator by handling database persistence and improving behavioral design through pattern implementation. This work will allow you to:
 
----
+1.	Separate persistence and domain logic using the Data Mapper pattern.
+2.	Intercept server operations using the Proxy pattern to ensure database consistency.
+3.	Encapsulate operations using the Command pattern to add flexibility and support Undo/Redo functionality.
 
-
-## Part 1: Install Entity Framework and Set Up `DbContext`
-
-We'll use Entity Framework for data persistence. To learn more about it, please check [here](https://learn.microsoft.com/en-us/aspnet/entity-framework).
-
-### 1. Install Required Packages
-
-We need to install some NuGet packages to work with EF and SQLite.
-Run the following commands in the terminal:
-
-```bash
-dotnet add package Microsoft.EntityFrameworkCore
-dotnet add package Microsoft.EntityFrameworkCore.Sqlite
-dotnet add package Microsoft.EntityFrameworkCore.Tools
-```
+By the end of this assignment, you will have a persistent server infrastructure model that supports flexible command-based operations and cleanly separates business logic from data access.
 
 
-### 2. Define a Base Model
-
-A base model ensures that all our database entities (tables) have common properties like an ID, a creation date, and an update date.
-
-#### Define the `IDbItem` Interface:
-```csharp
-public interface IDbItem {
-    Guid Id { get; set; }
-    DateTime Created { get; set; }
-    DateTime Updated { get; set; }
-}
-```
-
-#### Implement `DbItem` Abstract Class:
-```csharp
-public abstract class DbItem : IDbItem {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public DateTime Created { get; set; } = DateTime.UtcNow;
-    public DateTime Updated { get; set; } = DateTime.UtcNow;
-}
-```
-
-This ensures that all database entities automatically get an ID and timestamps.
+## Part 1: Handling Persistence with Data Mapper
 
 
-#### Create `DbServer` Entity:
-```csharp
-public class DbServer : DbItem {
-    public ServerType ServerType { get; set; }
-}
-```
+The Data Mapper pattern acts as a layer of separation between in-memory objects and the database. Instead of letting domain objects persist themselves, a mapper handles the data access logic and conversion between objects and database rows.
 
+You’ll implement a ServerDataMapper to manage IServer instances’ storage and retrieval. This ensures that your IServer logic remains decoupled from database operations, leading to cleaner code and better testability.
 
-### 3. Create Your `InfraSimContext`
+### 1. Update the Server with a Unique Identifier
 
-Entity Framework uses a class called DbContext to interact with the database.
+If we want to persist Servers, we need to have the identifier on the IServer so we can relate it to the DbServer in the database.
 
-
-- Create a class `InfraSimContext` and extend it from `DbContext`
-
-
-- Add a property for storing the servers:
+- Add the Id to the IServer
 
 ```csharp
-public DbSet<DbServer> DbServers { get; set; }
+Guid Id { get; set; }
 ```
 
-- Override the `OnConfiguring` method to add your SQLite configuration
+- Update your IServerBuilder to support setting the Id.
+- Ensure ServerBuilder assigns the Id correctly.
+- Fix any errors resulting from the interface change.
 
-```charp
-protected override void OnConfiguring(DbContextOptionsBuilder options)
+
+### 2. Create the IServerDataMapper Interface 
+
+Create your interface using GetAll, Get, Insert, and Remove.
+
+```csharp
+public interface IServerDataMapper
 {
-options.UseSqlite("Data Source=InfraSim.db");
+    List<IServer> GetAll();
+    IServer? Get(Guid id);
+    void Insert(IServer server);
+    void Remove(IServer server);
 }
 ```
 
-- Register teh context on `Program.cs` as the DbContext:
+### 3. Implement ServerDataMapper
 
-```csharp
-builder.Services.AddDbContext<InfraSimContext>();
-```
+- Inject IUnitOfWork and ICapabilityFactory via the constructor.
 
-### 4. Apply Database Migrations
+- Implement GetAll by retrieving DbServer items and transforming them into IServer using IServerBuilder.
 
-
-We need to create and apply migrations to set up the database schema.
-
-- Install EF tools:
-```bash
-dotnet tool install --global dotnet-ef
-```
-
-- Create the migration
-```bash
-dotnet ef migrations add InitialCreate
-```
-
-- Apply the migration to create the database
-```bash
-dotnet ef database update
-```
-
-- Check if a Migrations folder appears in your project and if InfraSim.db is created.
+- Implement remaining methods:
+  - Get(Guid id)
+  - Insert(IServer server)
+  - Remove(IServer server) – be sure to retrieve the DbServer before deleting.
+		
+- Register ServerDataMapper as a singleton.
 
 
 <br>
@@ -112,111 +65,103 @@ dotnet ef database update
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
-## Part 2: Create a Repository to Manage Database Entities
 
-A repository is a class that handles data operations, so we don’t need to interact directly with the database in multiple places.
+## Part 2: Persisting Through a Proxy
 
-Instead of creating a repository for each entity, we will use generics to create a reusable repository. More information on generics can be found [here](https://learn.microsoft.com/en-us/dotnet/standard/generics/).
+The Proxy pattern provides a surrogate or placeholder for another object to control access to it. It can be used for lazy initialization, logging, or, as in this case, persistence.
 
-### 1. Create an `IRepository` Interface
+You’ll create a ClusterProxy that wraps the original Cluster and intercepts changes to its server list. Any call to AddServeror RemoveServer will be forwarded to the proxy, which also performs the database operation via the ServerDataMapper.
 
-- The declaration of a generic in the interface should be done as following, defining the generic entity as a DbItem:
+This pattern lets you transparently handle database operations without modifying the original Cluster logic.
 
-```csharp
-public interface IRepository<TEntity> where TEntity : DbItem{
+### 1. Extract Server List Management
 
-}
-```
+- Create a new interface IServerList.
 
-- Add the following methods on the interface:
-```csharp
-    
-    List<TEntity> GetAll();
-    TEntity? Get(Guid id);
-    void Insert(TEntity item);
-    void Update(TEntity item);
-    void Delete(TEntity item);
-```
-
-### 2. Implement the `Repository` Class
-
-  
-- The class should be created identifying the generic:
+- Move relevant methods from ICluster into IServerList.
 
 ```csharp
-public class Repository<TEntity>: IRepository<TEntity> where TEntity: DbItem
+public interface IServerList
+  {
+      List<IServer> Servers {get;}
+      void AddServer(IServer server);
+      void RemoveServer(IServer server);
+  }
 ```
 
-- Your Repository needs the db context to perform database operations. You need to pass the InfraSimContext within the constructor and hold it in a class variable.
+- Update ICluster to inherit both IServer and IServerList:
+
+```csharp
+public interface ICluster : IServer, IServerList {}
+
+```
+
+### 2. Create the proxy
+
+- Create the ListServerProxy class which implements the IListServer
+
+- Hold a reference to the real Cluster and the IServerDataMapper.
+
+- Implement AddServer and RemoveServer:
+  - Persist to DB using the ServerDataMapper.
+  - Forward the call to the real cluster.
 
 
-- Implement the methods defined on the interface
-
-  - GetAll 
-
-  ```csharp
-  return Context.Set<TEntity>().ToList();
-  ```  
-  
-  - Get
-
-  ```csharp
-  return Context.Set<TEntity>()?.FirstOrDefault( x => x.Id == id );
-  ```
-  - Insert  
-  
-  ```csharp
-  Context.Set<TEntity>().Add(item);
-  ```  
-  
-  - Update  
-  
-  ```csharp
-  Context.Entry(item).State = EntityState.Modified;
-  ```  
-  
-  - Delete  
-  
-  ```csharp
-  Context.Remove(item);
-  ```
 
 <br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
-## Part 3: Implement a Generic Repository Factory
+## Part 3: Encapsulating Behavior with Command Pattern
 
-### 1. Create an `IRepositoryFactory` Interface
+The Command pattern encapsulates an operation (such as “Add Server”) as an object. This allows you to store, queue, and execute operations later, like undo or redo them.
 
-- Create a regular interface
 
-```csharp
-public interface IRepositoryFactory
-```
+You’ll implement AddServerCommand and RemoveServerCommand to encapsulate these changes. These commands will use the ClusterProxy to ensure persistence is handled automatically. You’ll also lay the groundwork for undo/redo functionality.
 
-- Define the generic in the method declaration. `TEntity` should be from an element that is storeable in our database:
 
-```csharp
-IRepository<TEntity> Create<TEntity>() where TEntity:DbItem
-```
 
-### 2. Implement the `RepositoryFactory` Class
+### 1. Create ICommand Interface
 
-- In order to handle the database entities, we need the context `InfraSimContext`. Pass it on constructor and hold it as a property
-
-- Implement the create Method:
-
-  ```csharp
-  return new Repository<TEntity>(Context);
-  ```
-
-### 3. Register as Singleton for Dependency Injection
+- Declare core command actions:
 
 ```csharp
-builder.Services.AddSingleton<IRepositoryFactory, RepositoryFactory>();
+void Do();
+void Undo();
+void Redo();
 ```
+
+
+### 2. Implement AddServerCommand
+
+- Create the class that implements ICommand
+
+- Accept IListServer, IServer, and IServerDataMapper via constructor.
+
+  - IListServer -> The Cluster we want to operate
+
+  - IServer -> The Server we want to Add
+
+  - IServerDataMapper -> For persistence purposes
+
+
+
+- Wrap the IListServer in a ListServerProxy 
+		
+- Implement:
+	- Do() → calls AddServer
+	- Undo() → calls RemoveServer
+	- Redo() → calls Do() again
+
+
+### 3. Implement RemoveServerCommand
+
+- Follow the same steps as AddServerCommand, but invert the logic:
+  - Do() → calls RemoveServer
+  - Undo() → calls AddServer
+
+- Apply steps similar to the RemoveServerCommand as you did on the AddServerCommand.
 
 <br>
 
@@ -224,196 +169,140 @@ builder.Services.AddSingleton<IRepositoryFactory, RepositoryFactory>();
 <br><br><br><br>
 
 
-## Part 4: Interact with Database with Unit Of Work
+## Part 4: Creating the Command Manager
 
-The Unit of Work Pattern ensures that multiple database operations are treated as a single transaction.
+The Command Manager (also called an Invoker in Command Pattern terminology) is responsible for executing commands, keeping a history of executed commands, and managing undo/redo.
 
-### 1. Create an `IUnitOfWork` interface 
+
+You’ll build a CommandManager that tracks executed commands, enabling users to step forward or back through server modifications.
+
+### 1. Define ICommandManager Interface
+
+- Create the interface with the following methods definition:
 
 ```csharp
-public interface IUnitOfWork : IDisposable
+bool HasUndo { get; }
+bool HasRedo { get; }
+
+void Execute(ICommand command);
+void Undo();
+void Redo();
+```
+
+### 2. Implement your CommandManager
+
+- Use a list to track all executed commands.
+	
+- Keep a position pointer to manage undo/redo stack.
+
+- In Execute, add command to the list and advance the pointer.
+
+  - If it has redo, you'll need to clean the stack ahead:
+
+```csharp
+if (HasRedo)
 {
-    IRepository<TEntity>? GetRepository<TEntity>() where TEntity : DbItem;
-
-    void Begin();
-    void Commit();
-    void Rollback();
-
-    void SaveChanges();
+  Commands.RemoveRange(Position + 1, Commands.Count - 1);
 }
 ```
 
-### 2. Create the `UnitOfWork` class implementing the `IUnitOfWork`.
-
-- You need a property for handling with the transactions:
+- In Undo, call Undo() on the current command and update the pointer.
 
 ```csharp
-private IDbContextTransaction? Transaction { get; set; }
-```
-
-- Inject `RepositoryFactory` and `InfraSimContext` in the constructor:
-
-```csharp
-private IRepositoryFactory<DbItem> RepositoryFactory { get; set; }
-private InfraSimContext Context { get; set; }
-
-public UnitOfWork(InfraSimContext context, IRepositoryFactory<DbItem> repositoryFactory)
+public void Undo()
 {
-    Context = context;
-    RepositoryFactory = repositoryFactory;
-}
-````
-
-### 3. Implement the database operation methods in `UnitOfWork`
-
-- Begin:
-```csharp
-Transaction = Context.Database.BeginTransaction();
-```
-
-- Commit:
-```csharp
-Transaction?.Commit();
-Transaction = null;
-```
-
-- Rollback:
-```csharp
-Trasaction?.Rollback();
-Transaction = null;
-```
-
-- Save Changes:
-```csharp
-Context.SaveChanges();
-```
-
-### 4. Hold references to repositories and create them on demand
-
-- Create a dictionary property in `UnitOfWork`:
-
-```csharp
-private IDictionary<Type, IRepository<DbItem>> Repositories { get; } = new Dictionary<Type, IRepository<DbItem>>();
-```
-
-- Implement `GetRepository`, checking if the repository exists in the dictionary, and creating it if not:
-
-```csharp
-public IRepository<TEntity> GetRepository<TEntity>() where TEntity : DbItem
-{
-    if (!Repositories.ContainsKey(typeof(TEntity)))
+    if(HasUndo)
     {
-        Repositories[typeof(TEntity)] = RepositoryFactory.Create<TEntity>();
-    }
-
-    return (IRepository<TEntity>)Repositories[typeof(TEntity)];
-}
-```
-
-<br>
-
-### 🏁  Commit Your Changes
-<br><br><br><br>
-
-## Part 5: Verify with Unit Tests
-
-We need to test two things: if a successful transaction is processed and if a failed transaction does not change the database.
-
-### 1. Create a MemoryInfraSimContext class
-- To perform tests without modifying the actual database, create an in-memory context by extending `InfraSimContext`:
-
-
-```csharp
-protected override void OnConfiguring(DbContextOptionsBuilder options)
-    {
-        SqliteConnection connection = new("DataSource=:memory:");
-        connection.Open();
-
-        options.UseSqlite(connection);
-    }
-```
-
-
-### 2. Create the DatabaseTest class
-
-**Important note:** Each unit test runs into a new instance. Meaning, before each unit test, the constructor will be called.
-
-Use the constructor to perform the preparation for the test:
-
-```csharp
-public class DataBaseTest
-{
-    DbServer Server;
-    InfraSimContext Context;
-    IRepositoryFactory Factory;
-    IUnitOfWork UnitOfWork;
-    IRepository<DbServer> ServerRepository;
-    public DataBaseTest()
-    {
+        Position--;
+        Commands[Position].Undo();
         
-
-        Server = new DbServer {
-            Id = Guid.NewGuid(),
-            ServerType = ServerType.Server
-        };
-    
-        Context = new MemoryInfraSimContext();
-        Context.Database.EnsureCreated();
-        
-        Factory = new RepositoryFactory(Context);
-        UnitOfWork = new UnitOfWork(Context, Factory);
-
-        ServerRepository = UnitOfWork.GetRepository<DbServer>();
-
-
-        UnitOfWork.Begin();
-        ServerRepository.Insert(Server);
-        
-        UnitOfWork.SaveChanges();
     }
 }
 ```
 
-### 3. Implement the success transaction test
-
-The constructor will prepare the context, create the repository and start the transaction.
-Ensure in case of commit the server is stored.
+- In Redo, call Redo() on the next command and update pointer.
 
 ```csharp
-[Fact]
-public void WhenAddingServersInDatabase_TheyAreStoredIfSuccess()
+public void Redo()
 {
+    if(HasRedo)
     
-    UnitOfWork.Commit();
-
-    var servers = ServerRepository.GetAll();
-    Assert.Single(servers);
+        Commands[Position].Redo();
+        Position++;
+    }
 }
 ```
 
-### 4. Implement the failing transaction test
+- In HasUndo, return if Position is grater or equal to 0.
 
-The constructor will prepare the context, create the repository and start the transaction.
-Ensure in case of rollback the server is not stored.
+- In HasRedo, reurn if Position is less than the last element.
+
+
+
+
+### 3. Resgister as Singleton
+
+Register your Command Manager as Singleton in the Program.cs file.
+
+### 4. Update your Interface Mediator to execute the commands
+
+- Pass the CommandManager in the constructor and hold it in a class property.
+
+- Pass the ServerDataMapper in the constructor and hold it in a class property.
+
+- Update the AddServer implementation to use the Command:
 
 ```csharp
-[Fact]
-public void WhenAddingServersInDatabase_TheyAreNotStoredIfFailed()
+public void AddServer(IServer server)
 {
-    UnitOfWork.Rollback();
-
-    var servers = ServerRepository.GetAll();
-    Assert.Empty(servers);
+    switch (server.ServerType)
+    {
+        case ServerType.CDN:
+        case ServerType.LoadBalancer:
+            AddServerCommand addServerCommand = new AddServerCommand(Gateway, server, Mapper);
+            CommandManager.Execute(addServerCommand);
+            break;
+        case ServerType.Cache:
+        case ServerType.Server:
+            addServerCommand = new AddServerCommand(Processors, server, Mapper);
+            CommandManager.Execute(addServerCommand);
+            break;
+        
+    }
 }
 ```
+
+
 
 <br>
 
 ### 🏁  Commit Your Changes
-
 <br><br><br><br>
 
-# Final Reminder
-⚠️ Don’t forget to push your code to the assignment repository once all parts are complete. This assignment is designed to create a database layer using Repository and UnitOfWork.
+## Part 5: Unit Tests
 
-Good luck, and enjoy building your database structure with Entity Framework, Repository and UnitOfWork using generics!
+- Fix your unit tests
+
+- Generate the unit tests fpr the command manager. Select the CommandManager file and write `/tests` in the copilot prompt.
+
+  - Verify if Do, Redo, Undo are performed has expected
+
+
+
+<br>
+
+### 🏁  Commit Your Changes
+<br><br><br><br>
+
+## Final Reminder
+
+⚠️ Don’t Forget: Push your code to this assignment’s remote repository once you have completed all parts of the assignment. This exercise focuses on the behavioral and data access design patterns essential to building resilient and scalable systems.
+
+By completing this assignment, you will:
+
+- **Data Mapper** keeps your business logic clean.
+- **Proxy** quietly enforces side effects.
+- **Command** empowers flexible user-driven operations.
+
+These principles are foundational for maintainable enterprise applications and systems architecture. Practice them and don’t hesitate to ask for guidance. 🚀
+
