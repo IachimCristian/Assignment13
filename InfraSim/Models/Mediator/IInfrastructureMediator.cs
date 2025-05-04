@@ -7,5 +7,7 @@ namespace InfraSim.Models.Mediator
         ICluster Gateway { get; }
         ICluster Processors { get; }
         void AddServer(IServer server);
+        IServerIterator Iterator { get; }
+        IServerIterator CreateServerIterator();
     }
 } 

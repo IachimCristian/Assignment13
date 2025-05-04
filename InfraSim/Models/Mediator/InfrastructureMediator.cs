@@ -34,5 +34,12 @@ namespace InfraSim.Models.Mediator
                     break;
             }
         }
+
+        public IServerIterator Iterator => new ServerIterator(Gateway);
+
+        public IServerIterator CreateServerIterator()
+        {
+            return new ServerIterator(Gateway);
+        }
     }
 } 
