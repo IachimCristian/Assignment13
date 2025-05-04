@@ -8,6 +8,17 @@ namespace InfraSim.Models.Mediator
         public ICluster Processors { get; private set; }
         private readonly ICommandManager _commandManager;
         private readonly IServerDataMapper _mapper;
+        public int TotalCost
+        {
+            get
+            {
+                IServerIterator serverIterator = CreateServerIterator();
+                var costCalculator = new CostCalculator();
+                while (serverIterator.HasNext)
+                    serverIterator.Next.Accept(costCalculator);
+                return costCalculator.TotalCost;
+            }
+        }
 
         public InfrastructureMediator(IServerFactory serverFactory, ICommandManager commandManager, IServerDataMapper mapper) // For the InfrastructureMediator 
         {

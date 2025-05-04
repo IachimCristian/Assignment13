@@ -48,5 +48,10 @@ namespace InfraSim.Models.Server
                 State.Handle(this);
             }
         }
+
+        public void Accept(IServerVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
     }
 } 

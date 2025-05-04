@@ -8,7 +8,7 @@ namespace InfraSim.Models.Server
     /// <summary>
     /// Interface for server components that can handle requests
     /// </summary>
-    public interface IServer : IServerStateHandler
+    public interface IServer : IServerStateHandler, IServerAcceptVisit
     {
         Guid Id { get; set; }
         ServerType ServerType { get; }
