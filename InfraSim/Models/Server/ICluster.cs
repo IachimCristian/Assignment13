@@ -4,8 +4,8 @@ namespace InfraSim.Models.Server
 {
     public interface ICluster : IServer, IServerList
     {
-        void AddServer(IServer server);
-        void RemoveServer(IServer server);
-        List<IServer> Servers { get; }
+        new List<IServer> Servers { get; set; }
+        new void AddServer(IServer server);
+        new void RemoveServer(IServer server);
     }
 } 

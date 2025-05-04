@@ -1,4 +1,5 @@
 using InfraSim.Models.Capability;
+using System.Linq;
 
 namespace InfraSim.Models.Server
 {
@@ -6,11 +7,13 @@ namespace InfraSim.Models.Server
     {
         private readonly ICapabilityFactory _capabilityFactory;
         private readonly ServerBuilder _builder;
+        private readonly IServerDataMapper _dataMapper;
 
-        public ServerFactory(ICapabilityFactory capabilityFactory)
+        public ServerFactory(ICapabilityFactory capabilityFactory, IServerDataMapper dataMapper)
         {
             _capabilityFactory = capabilityFactory;
             _builder = new ServerBuilder();
+            _dataMapper = dataMapper;
         }
 
         private IServer CreateServerWithType(ServerType type)
@@ -46,6 +49,24 @@ namespace InfraSim.Models.Server
         {
             var capability = _capabilityFactory.Create(ServerType.Cluster);
             return new Cluster(capability);
+        }
+
+        public ICluster CreateGatewayCluster()
+        {
+            var capability = _capabilityFactory.Create(ServerType.Cluster);
+            var cluster = new Cluster(capability);
+            var servers = _dataMapper.GetAll().Where(s => s.ServerType == ServerType.CDN || s.ServerType == ServerType.LoadBalancer).ToList();
+            cluster.Servers = servers;
+            return cluster;
+        }
+
+        public ICluster CreateProcessorsCluster()
+        {
+            var capability = _capabilityFactory.Create(ServerType.Cluster);
+            var cluster = new Cluster(capability);
+            var servers = _dataMapper.GetAll().Where(s => s.ServerType == ServerType.Cache || s.ServerType == ServerType.Server).ToList();
+            cluster.Servers = servers;
+            return cluster;
         }
     }
 } 

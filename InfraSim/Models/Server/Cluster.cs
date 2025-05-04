@@ -6,7 +6,7 @@ namespace InfraSim.Models.Server
 {
     public class Cluster : BaseServer, ICluster
     {
-        public List<IServer> Servers { get; private set; }
+        public List<IServer> Servers { get; set; }
 
         public Cluster(IServerCapability serverCapability) 
             : base(ServerType.Cluster, serverCapability)

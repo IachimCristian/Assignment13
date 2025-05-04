@@ -13,7 +13,11 @@ namespace InfraSim.Models.Server
             _dataMapper = dataMapper;
         }
 
-        public List<IServer> Servers => _realCluster.Servers;
+        public List<IServer> Servers
+        {
+            get => _realCluster.Servers;
+            set => _realCluster.Servers = value;
+        }
 
         public void AddServer(IServer server)
         {
