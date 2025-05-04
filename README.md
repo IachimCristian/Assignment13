@@ -1,308 +1,478 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/6vQaPKZ5)
-# Assignment 10: Data Persistence with Data Mapper, Proxy, and Command
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/1iXIjRpu)
+# Assignment 11: UI Display with Adapter, Iterator & Visitor
 
-In this assignment, you will enhance your infrastructure simulator by handling database persistence and improving behavioral design through pattern implementation. This work will allow you to:
+In this assignment, we will enhance the infrastructure simulator's front end by wiring domain objects to the Blazor UI. We'll practise three design patterns: Adapter, Iterator, and Visitor.
 
-1.	Separate persistence and domain logic using the Data Mapper pattern.
-2.	Intercept server operations using the Proxy pattern to ensure database consistency.
-3.	Encapsulate operations using the Command pattern to add flexibility and support Undo/Redo functionality.
+Completing the exercise will let us:
 
-By the end of this assignment, you will have a persistent server infrastructure model that supports flexible command-based operations and cleanly separates business logic from data access.
+- Adapt a domain model so the UI can bind directly to it (Adapter).
 
+- Traverse composite structures safely (Iterator).
 
-## Part 1: Handling Persistence with Data Mapper
+- Aggregate information over a heterogeneous structure (Visitor).
 
+- Round everything off with Razor component updates, undo/redo buttons and total‑cost display.
 
-The Data Mapper pattern acts as a layer of separation between in-memory objects and the database. Instead of letting domain objects persist themselves, a mapper handles the data access logic and conversion between objects and database rows.
+## Part 1: Displaying our servers with Adapter
 
-You’ll implement a ServerDataMapper to manage IServer instances’ storage and retrieval. This ensures that your IServer logic remains decoupled from database operations, leading to cleaner code and better testability.
+The Adapter pattern converts the interface of one class into another interface that clients expect. It is most useful when we reuse an existing class whose API does not match the one required by a consuming layer (UI, external library, test harness, etc.).
 
-### 1. Update the Server with a Unique Identifier
+Our UI needs a simple model with a Name, an Icon and a Color that reflects the server's current state.
 
-If we want to persist Servers, we need to have the identifier on the IServer so we can relate it to the DbServer in the database.
-
-- Add the Id to the IServer
+1. Create the `IServerInfo` with these properties.
 
 ```csharp
-Guid Id { get; set; }
-```
-
-- Update your IServerBuilder to support setting the Id.
-- Ensure ServerBuilder assigns the Id correctly.
-- Fix any errors resulting from the interface change.
-
-
-### 2. Create the IServerDataMapper Interface 
-
-Create your interface using GetAll, Get, Insert, and Remove.
-
-```csharp
-public interface IServerDataMapper
+public interface IServerInfo
 {
-    List<IServer> GetAll();
-    IServer? Get(Guid id);
-    void Insert(IServer server);
-    void Remove(IServer server);
+    public string Name { get; }
+    public string ImageUrl { get; }
+    public string StatusColor { get; }
 }
 ```
 
-### 3. Implement ServerDataMapper
+2. Implement ServerInfoAdapter. It implements IServerInfo, receives an IServer in its constructor and stores it in a read‑only field/property.
 
-- Inject IUnitOfWork and ICapabilityFactory via the constructor.
+3. Use the server type to return the name and icon.
+Use the ones in this assignment or pick any from the web.
 
-- Implement GetAll by retrieving DbServer items and transforming them into IServer using IServerBuilder.
+**Note**: Since .NET 8, we can use switch expressions instead of the traditional switch statements.
+This is a good opportunity to apply a switch statement, here is an example:
+```csharp
+public string Name => Server.ServerType switch
+        {
+            ServerType.Server => "Server",
+            ServerType.Cache => "Cache",
+            ServerType.LoadBalancer => "Load Balancer",
+            ServerType.CDN => "CDN",
+            _ => throw new NotImplementedException()
+        };
 
-- Implement remaining methods:
-  - Get(Guid id)
-  - Insert(IServer server)
-  - Remove(IServer server) – be sure to retrieve the DbServer before deleting.
-		
-- Register ServerDataMapper as a singleton.
+````
 
+
+4. Calculate the status color based on its status.
+Idle -> Gray
+Normal -> Blue
+Overloaded -> Orange
+Failed -> Red
 
 <br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
+## Part 2: Navigating with Iterator
 
-## Part 2: Persisting Through a Proxy
+The Iterator pattern provides a uniform way to traverse elements of an aggregate object (a collection, tree, composite, …) without exposing its internal representation.
 
-The Proxy pattern provides a surrogate or placeholder for another object to control access to it. It can be used for lazy initialization, logging, or, as in this case, persistence.
+A cluster may contain individual servers and nested clusters, and we need to list all leaf servers, even those inside nested clusters. An iterator will give us a flat walk over the composite.
 
-You’ll create a ClusterProxy that wraps the original Cluster and intercepts changes to its server list. Any call to AddServeror RemoveServer will be forwarded to the proxy, which also performs the database operation via the ServerDataMapper.
 
-This pattern lets you transparently handle database operations without modifying the original Cluster logic.
 
-### 1. Extract Server List Management
+1. Create an IServerIterator with two properties: HasNext and Next, where HasNext is a boolean and Next returns an IServer.
 
-- Create a new interface IServerList.
+2. Implement ServerIterator
 
-- Move relevant methods from ICluster into IServerList.
+- Create the ServerIterator class implementing IServerIterator
 
-```csharp
-public interface IServerList
-  {
-      List<IServer> Servers {get;}
-      void AddServer(IServer server);
-      void RemoveServer(IServer server);
-  }
-```
+- Create a property to hold a list of IServer
 
-- Update ICluster to inherit both IServer and IServerList:
+- On the constructor, it will need to receive a Cluster and call a recursive method to retrieve the servers and store them in the list of servers. Here is an example of the recursive GetServers
 
 ```csharp
-public interface ICluster : IServer, IServerList {}
-
-```
-
-### 2. Create the proxy
-
-- Create the ListServerProxy class which implements the IListServer
-
-- Hold a reference to the real Cluster and the IServerDataMapper.
-
-- Implement AddServer and RemoveServer:
-  - Persist to DB using the ServerDataMapper.
-  - Forward the call to the real cluster.
-
-
-
-<br>
-
-### 🏁  Commit Your Changes
-<br><br><br><br>
-
-## Part 3: Encapsulating Behavior with Command Pattern
-
-The Command pattern encapsulates an operation (such as “Add Server”) as an object. This allows you to store, queue, and execute operations later, like undo or redo them.
-
-
-You’ll implement AddServerCommand and RemoveServerCommand to encapsulate these changes. These commands will use the ClusterProxy to ensure persistence is handled automatically. You’ll also lay the groundwork for undo/redo functionality.
-
-
-
-### 1. Create ICommand Interface
-
-- Declare core command actions:
-
-```csharp
-void Do();
-void Undo();
-void Redo();
-```
-
-
-### 2. Implement AddServerCommand
-
-- Create the class that implements ICommand
-
-- Accept IListServer, IServer, and IServerDataMapper via constructor.
-
-  - IListServer -> The Cluster we want to operate
-
-  - IServer -> The Server we want to Add
-
-  - IServerDataMapper -> For persistence purposes
-
-
-
-- Wrap the IListServer in a ListServerProxy 
-		
-- Implement:
-	- Do() → calls AddServer
-	- Undo() → calls RemoveServer
-	- Redo() → calls Do() again
-
-
-### 3. Implement RemoveServerCommand
-
-- Follow the same steps as AddServerCommand, but invert the logic:
-  - Do() → calls RemoveServer
-  - Undo() → calls AddServer
-
-- Apply steps similar to the RemoveServerCommand as you did on the AddServerCommand.
-
-<br>
-
-### 🏁  Commit Your Changes
-<br><br><br><br>
-
-
-## Part 4: Creating the Command Manager
-
-The Command Manager (also called an Invoker in Command Pattern terminology) is responsible for executing commands, keeping a history of executed commands, and managing undo/redo.
-
-
-You’ll build a CommandManager that tracks executed commands, enabling users to step forward or back through server modifications.
-
-### 1. Define ICommandManager Interface
-
-- Create the interface with the following methods definition:
-
-```csharp
-bool HasUndo { get; }
-bool HasRedo { get; }
-
-void Execute(ICommand command);
-void Undo();
-void Redo();
-```
-
-### 2. Implement your CommandManager
-
-- Use a list to track all executed commands.
-	
-- Keep a position pointer to manage undo/redo stack.
-
-- In Execute, add command to the list and advance the pointer.
-
-  - If it has redo, you'll need to clean the stack ahead:
-
-```csharp
-if (HasRedo)
-{
-  Commands.RemoveRange(Position + 1, Commands.Count - 1);
-}
-```
-
-- In Undo, call Undo() on the current command and update the pointer.
-
-```csharp
-public void Undo()
-{
-    if(HasUndo)
-    {
-        Position--;
-        Commands[Position].Undo();
-        
-    }
-}
-```
-
-- In Redo, call Redo() on the next command and update pointer.
-
-```csharp
-public void Redo()
-{
-    if(HasRedo)
+private List<IServer> GetServers(ICluster cluster) {
+    var servers = new List<IServer>();
     
-        Commands[Position].Redo();
-        Position++;
-    }
+    cluster.Servers.ForEach(server => {
+        if (server is Cluster) {
+            servers.AddRange(GetServers((ICluster)server));
+        }
+        else {
+            servers.Add(server);
+        }
+    });
+
+    return servers;
 }
 ```
 
-- In HasUndo, return if Position is grater or equal to 0.
+- Create an integer property to indicate the index positions. You can name it `Position`.
 
-- In HasRedo, reurn if Position is less than the last element.
+3. Implement `HasNext` by comparing the `Position` with the Count of the List of servers.
 
+4. Implement the `Next` by returning the `Server` at the current `Position` and incrementing it.
 
+5. Add a property on the `IInfrastructureMediator` to return a new `Iterator`
 
+On the IInfrastructureMediator
+```csharp
+IServerIterator CreateServerIterator();
+```
 
-### 3. Resgister as Singleton
-
-Register your Command Manager as Singleton in the Program.cs file.
-
-### 4. Update your Interface Mediator to execute the commands
-
-- Pass the CommandManager in the constructor and hold it in a class property.
-
-- Pass the ServerDataMapper in the constructor and hold it in a class property.
-
-- Update the AddServer implementation to use the Command:
+And on the InfrastructureMediator:
 
 ```csharp
-public void AddServer(IServer server)
+public IServerIterator CreateServerIterator()
 {
-    switch (server.ServerType)
-    {
-        case ServerType.CDN:
-        case ServerType.LoadBalancer:
-            AddServerCommand addServerCommand = new AddServerCommand(Gateway, server, Mapper);
-            CommandManager.Execute(addServerCommand);
-            break;
-        case ServerType.Cache:
-        case ServerType.Server:
-            addServerCommand = new AddServerCommand(Processors, server, Mapper);
-            CommandManager.Execute(addServerCommand);
-            break;
-        
-    }
+    return new ServerIterator(Gateway);
+}
+```
+
+
+<br>
+
+### 🏁  Commit Your Changes
+<br><br><br><br>
+
+## Part 3: Load the Servers from the database
+
+When loading the page, we need to retrieve the data from the database to display the existing servers.
+We will return the clusters loaded with respective servers on the Server factory.
+
+1. Update the `IServerFactory` and `ServerFactory` to support the different clusters:
+
+```csharp
+    public virtual ICluster CreateGatewayCluster();
+    public virtual ICluster CreateProcessorsCluster();
+```
+
+2. Update the `ServerFactory` constructor to receive an `IServerDataMapper` on the constructor
+
+3. Update the creation of the cluster's methods to receive the servers from the database and filter out the desired servers.
+Remember, Gateway receives CDN and LoadBalancer. Processors receive Cache and Server.
+
+**Note**: You may need a public `Servers` setter in `IServerList` and its implementers (`Cluster`, `ServerListProxy`).
+
+
+<br>
+
+### 🏁  Commit Your Changes
+<br><br><br><br>
+
+## Part 4: Implement the visitor to get a total cost
+
+The Visitor pattern allows algorithms to be separated from the objects on which they operate. By moving the computation into a visitor, you can add new operations without changing the element classes.
+
+Every IServer has a Capability with an associated cost. UI needs the aggregate cost of the entire infrastructure. 
+Instead of adding a GetTotalCost() method to each server (violating SRP), we implement a CostCalculator visitor.
+All servers implement Accept(IServerVisitor) which forwards the call to the visitor’s Visit(this).
+
+
+
+1. Create an IServerVisitor 
+
+- IServerVisitor will have a void Visit(IServer server)
+
+2. Create an IServerAcceptVisit
+
+- IServerAcceptVisit will have an accept method:
+
+```csharp
+void Accept(ISserverVisitor visitor);
+```
+
+3. Extent the IServer from IServerAcceptVisit
+
+4. Add the implementation on the BaseServer.
+
+```csharp
+public void Accept(IServerVisitor visitor)
+{
+    visitor.Visit(this);
+}
+```
+
+5. Create a CostCalculator implementing the IServerVisitor
+
+- Create a class property TotalCost
+
+```csharp
+public int TotalCost { get; private set; }
+```
+
+- implement the Visit by incrementing the TotalCost with the Server's capability cost.
+
+```csharp
+public void Visit(IServer server)
+{
+    TotalCost += server.Capability.Cost;
 }
 ```
 
 
 
+6. In the IInfrastructureMediator create a TotalCost property.
+
+7. Implement it in the InfrastructureMediator:
+```csharp
+public int TotalCost
+    {
+        get
+        {
+            IServerIterator serverIterator = CreateServerIterator();
+            CostCalculator costCalculator = new CostCalculator();
+            
+            while(serverIterator.HasNext())
+                serverIterator.Next().Accept(costCalculator);
+            
+            return costCalculator.TotalCost;
+        }
+    }
+```
+
 <br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
-## Part 5: Unit Tests
+## Part 5: Update the razor components
 
-- Fix your unit tests
+Back to our web interface and  start bringing visibility to our Infrastructure simulator.
 
-- Generate the unit tests fpr the command manager. Select the CommandManager file and write `/tests` in the copilot prompt.
+If you try to run the project as it is you might find the following issue:
+```
+System.AggregateException: Some services are not able to be constructed
+```
 
-  - Verify if Do, Redo, Undo are performed has expected
+This error is caused by Dependency Injection dependencies. 
+Blazor will not start because scoped services are injected into singletons causing a lifetime mismatch. 
+If a singleton service depends on a scoped service, then the singleton might accidentally share the state from one user’s circuit with others, breaking isolation and introducing bugs.
 
 
+1. We need to update some of the singletons. The InfraSimContext is a Scoped and is injected into IInfrastriuctureMediator. 
+So this last one cannot be a Singleton, but a scoped, as the others that depend on it:
+
+```csharp
+builder.Services.AddScoped<IRepositoryFactory, RepositoryFactory>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddDbContext<InfraSimContext>();
+builder.Services.AddSingleton<ICapabilityFactory, CapabilityFactory>();
+builder.Services.AddScoped<IServerFactory, ServerFactory>();
+
+builder.Services.AddScoped<IServerDataMapper, ServerDataMapper>();
+builder.Services.AddSingleton<ICommandManager, CommandManager>();
+builder.Services.AddScoped<IInfrastructureMediator, InfrastructureMediator>();
+```
+
+2. Update Actions.razor
+
+- Inject the IServerFactory
+```csharp
+@inject IServerFactory ServerFactory
+```
+
+- Change the `AddPressed` to receive an IServer
+
+```csharp
+public EventCallback<IServer> AddPressed { get; set; }
+```
+
+- Create an Add Button for each kind of servers, and call the AddPressed with an instance for the specific server from the server factory:
+```csharp
+<div class="div-container">
+    <button class="round-button green-button" @onclick="@StartPressed">Start</button>
+</div>
+<div class="div-container">
+    <button class="round-button grey-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateCDN())">Add CDN</button>
+    <button class="round-button grey-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateLoadBalancer())">Add LB</button>
+</div>
+<div class="div-container">
+    <button class="round-button grey-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateServer())">Add Server</button>
+    <button class="round-button grey-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateCache())">Add Cache</button>
+</div>
+```
+
+3. Update Index/Home 
+
+- Inject the InfrastructureMediator
+
+```csharp
+@inject IInfrastructureMediator InfrastructureMediator
+```
+
+- Maintain a local list of servers:
+
+```csharp
+List<IServer> Servers = new List<IServer>();
+```
+
+
+- Create a RefreshUI method to reload the ServerIterator, fill the list of servers from the iterator and call the StateHasChanged
+
+```csharp
+
+private void RefreshUI(){
+    Servers = new List<IServer>();
+    IServerIterator iterator = InfrastructureMediator.CreateServerIterator();
+    while(iterator.HasNext){
+        Servers.Add(iterator.Next);
+    }
+    StateHasChanged();
+}
+```
+
+- Update the AddServer to receive the server as an argument, call the infrastructure mediator, and call the refresh UI
+
+```csharp 
+protected void AddServer(IServer server){
+    InfrastructureMediator.AddServer(server);
+    RefreshUI();
+}
+```
+
+- Update the `OnInitialize` method to call the RefreshUI:
+
+```csharp
+    protected override void OnInitialized(){
+        UserCounter.OnCounterChanged += StateHasChanged;
+        RefreshUI();
+    }
+```
+
+
+
+4. Update Server.razor
+
+- Create a parameter to receive an IServerInfo
+@code {
+    [Parameter]
+    public IServerInfo? ServerInfo { get; set; } 
+}
+
+- Create a new div to add the status element
+
+```html
+<div class="div-container">
+    <img class="img-size" src=@ServerInfo?.ImageUrl />
+    <div>
+        <div class="status @ServerInfo?.StatusColor">&nbsp;</div>
+        <span>@ServerInfo?.Name</span>
+    </div>
+    
+</div>
+```
+
+- Create the following styles
+```csharp
+.status{
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+}
+.blue{
+    background-color: blue;
+}
+.gray{
+    background-color: gray;
+}
+.red{
+    background-color: red;
+}
+.orange{
+    background-color: orange;
+}
+```
+
+- In the Home/Index, update the servers panel to pass the ServerInfo
+
+```csharp
+<div class="servers-panel">
+    @foreach (IServer server in Servers){
+        <Server ServerInfo="@(new ServerInfoAdapter(server))" />
+    }
+    
+</div>
+```
+
+- Drop server icons into `wwwroot/images`
+
+
+
+5. Display the infrastructure total cost
+
+- On the Index/Home component add a span below the users' count with a reference for the value:
+
+```csharp
+
+<span>€ @InfrastructureMediator.TotalCost</span>
+```
+
+6. Add the Undo and Redo Options in the `Actions.razor`
+
+- inject the CommandManager
+
+```csharp
+@inject ICommandManager CommandManager
+```
+
+- Add the new buttons
+
+```csharp
+<div class="div-container">
+    
+    <button disabled="@UndoDisabled" class="round-button grey-button" @onclick="Undo">Undo</button>
+    <button disabled="@RedoDisabled" class="round-button grey-button" @onclick="Redo">Redo</button>
+</div>
+```
+
+- Create a parameter to pass the refresh page action:
+
+```csharp
+[Parameter]
+public EventCallback Refresh { get; set; }
+```
+
+- Implement the Undo/Redo logic:
+```csharp
+   void Redo()
+    {
+        CommandManager.Redo();
+        Refresh.InvokeAsync();
+    }
+    void Undo()
+    {
+        CommandManager.Undo();
+        Refresh.InvokeAsync();
+    }
+```
+
+- Create the Visibility properties for the buttons:
+
+```csharp
+public bool UndoDisabled => !CommandManager.HasUndo;
+public bool RedoDisabled => !CommandManager.HasRedo;
+```
+
+- In the Index/Home component, pass the RefreshUI to the Actions' Refresh property
+
+```csharp
+<Actions StartPressed="StartIncrementing" AddPressed="AddServer" Refresh="RefreshUI" />
+```
+
+
+7. Smoke Tests
+
+- Add each server type.
+- Reload the browser—the servers should still be there.
+- Verify Undo and Redo stack.
 
 <br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
+
+
+
 
 ## Final Reminder
 
-⚠️ Don’t Forget: Push your code to this assignment’s remote repository once you have completed all parts of the assignment. This exercise focuses on the behavioral and data access design patterns essential to building resilient and scalable systems.
+⚠️  Don't Forget: Push your code to this assignment's remote repository once you have completed all parts of the assignment. This exercise focuses on gathering the elements for being represented on the UI.
 
-By completing this assignment, you will:
+By finishing Assignment 11 you will have:
 
-- **Data Mapper** keeps your business logic clean.
-- **Proxy** quietly enforces side effects.
-- **Command** empowers flexible user-driven operations.
+- **Adapter** to decouple domain objects from UI needs.
+- **Iterator** to flatten composite structures safely.
+- **Visitor** to aggregate metrics (cost!) across heterogeneous nodes.
 
-These principles are foundational for maintainable enterprise applications and systems architecture. Practice them and don’t hesitate to ask for guidance. 🚀
+These patterns keep the infrastructure simulator maintainable and extensible. Enjoy and reach out for help whenever you need it. 🚀
 
