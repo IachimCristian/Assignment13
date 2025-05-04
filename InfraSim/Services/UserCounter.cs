@@ -1,18 +1,51 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 public class UserCounter
 {
     public int Counter { get; private set; }
     public event Action OnCounterChanged;
+    private CancellationTokenSource _cts;
+    private bool _isIncrementing;
 
     public async Task StartIncrementingAsync()
     {
-        for (int i = 0; i < 200000; i += 5000)
+        if (_isIncrementing)
+            return;
+
+        _isIncrementing = true;
+        _cts = new CancellationTokenSource();
+        
+        try
         {
-            Counter += 5000;
-            OnCounterChanged?.Invoke();
-            await Task.Delay(10);
+            for (int i = 0; i < 200000 && !_cts.Token.IsCancellationRequested; i += 5000)
+            {
+                Counter += 5000;
+                OnCounterChanged?.Invoke();
+                await Task.Delay(10, _cts.Token);
+            }
         }
+        catch (OperationCanceledException)
+        {
+            // Task was canceled - this is expected during reset
+        }
+        finally
+        {
+            _isIncrementing = false;
+        }
+    }
+    
+    public void Reset()
+    {
+        // Cancel any ongoing incrementing
+        if (_isIncrementing && _cts != null)
+        {
+            _cts.Cancel();
+            _isIncrementing = false;
+        }
+        
+        Counter = 0;
+        OnCounterChanged?.Invoke();
     }
 }

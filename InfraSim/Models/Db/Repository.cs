@@ -16,27 +16,113 @@ namespace InfraSim.Models.Db
 
         public List<TEntity> GetAll()
         {
-            return Context.Set<TEntity>().ToList();
+            try
+            {
+                var entities = Context.Set<TEntity>().ToList();
+                Console.WriteLine($"Repository: Retrieved {entities.Count} entities of type {typeof(TEntity).Name}");
+                return entities;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Repository ERROR in GetAll for {typeof(TEntity).Name}: {ex.Message}");
+                return new List<TEntity>();
+            }
         }
 
         public TEntity Get(Guid id)
         {
-            return Context.Set<TEntity>()?.FirstOrDefault(x => x.Id == id);
+            try
+            {
+                var entity = Context.Set<TEntity>()?.FirstOrDefault(x => x.Id == id);
+                if (entity != null)
+                {
+                    Console.WriteLine($"Repository: Found entity {typeof(TEntity).Name} with ID {id}");
+                }
+                else
+                {
+                    Console.WriteLine($"Repository: Entity {typeof(TEntity).Name} with ID {id} NOT FOUND");
+                }
+                return entity;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Repository ERROR in Get for {typeof(TEntity).Name} with ID {id}: {ex.Message}");
+                return null;
+            }
         }
 
         public void Insert(TEntity item)
         {
-            Context.Set<TEntity>().Add(item);
+            try
+            {
+                // Check if entity is already being tracked
+                var existing = Context.Set<TEntity>().Local.FirstOrDefault(e => e.Id == item.Id);
+                if (existing != null)
+                {
+                    Console.WriteLine($"Repository: Entity {typeof(TEntity).Name} with ID {item.Id} already being tracked");
+                    return;
+                }
+                
+                Context.Set<TEntity>().Add(item);
+                Console.WriteLine($"Repository: Added entity {typeof(TEntity).Name} with ID {item.Id}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Repository ERROR in Insert for {typeof(TEntity).Name} with ID {item.Id}: {ex.Message}");
+                throw;
+            }
         }
 
         public void Update(TEntity item)
         {
-            Context.Entry(item).State = EntityState.Modified;
+            var existingEntry = Context.Entry(item);
+            if (existingEntry.State == EntityState.Detached)
+            {
+                // If entity is not being tracked, attach it first
+                var attachedEntity = Context.Set<TEntity>().Local.FirstOrDefault(e => e.Id == item.Id);
+                if (attachedEntity != null)
+                {
+                    // Update values from item to attached entity
+                    Context.Entry(attachedEntity).CurrentValues.SetValues(item);
+                }
+                else
+                {
+                    // Attach and mark as modified
+                    Context.Set<TEntity>().Attach(item);
+                    Context.Entry(item).State = EntityState.Modified;
+                }
+            }
+            else
+            {
+                // Entity is being tracked, mark as modified
+                existingEntry.State = EntityState.Modified;
+            }
         }
 
         public void Delete(TEntity item)
         {
-            Context.Remove(item);
+            // Handle potentially detached entities
+            var existingEntry = Context.Entry(item);
+            if (existingEntry.State == EntityState.Detached)
+            {
+                // If it's detached, find the attached version if it exists
+                var attachedEntity = Context.Set<TEntity>().Local.FirstOrDefault(e => e.Id == item.Id);
+                if (attachedEntity != null)
+                {
+                    Context.Remove(attachedEntity);
+                }
+                else
+                {
+                    // If not in local tracking, attach and remove
+                    Context.Set<TEntity>().Attach(item);
+                    Context.Remove(item);
+                }
+            }
+            else
+            {
+                // Entity is being tracked, remove it
+                Context.Remove(item);
+            }
         }
     }
 } 

@@ -1,36 +1,86 @@
 @using Microsoft.AspNetCore.Components
+@using InfraSim.Models.Server
 
-<div class="server-container">
-    <img src="images/server.png" alt="Server" class="server-image" />
-    <span class="server-label">@Label</span>
+<div class="div-container">
+    <img class="img-size" src=@ServerInfo?.ImageUrl />
+    <div class="status-row">
+        <div class="status @ServerInfo?.StatusColor">&nbsp;</div>
+    </div>
+    <div class="label-container">
+        <span class="server-label @(ServerInfo?.Name?.Contains(" ") == true ? "multiline" : "")">@ServerInfo?.Name</span>
+    </div>
 </div>
 
 <style>
-    .server-container {
+    .div-container {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
         background-color: #f0f0f0;
         padding: 16px;
         border-radius: 8px;
         width: 120px;
-        height: 100px;
+        height: 120px;
     }
 
-    .server-image {
+    .img-size {
         width: 48px;
         height: 48px;
     }
 
+    .status-row {
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+        padding-left: 10px;
+    }
+
+    .label-container {
+        width: 100%;
+        text-align: center;
+        margin-top: 2px;
+    }
+
     .server-label {
         font-size: 0.9rem;
-        font-weight: 500;
-        color: #333;
+        display: block;
+        text-align: center;
+        word-wrap: break-word;
+        hyphens: auto;
+        line-height: 1.1;
+    }
+
+    .multiline {
+        font-size: 0.85rem;
+        line-height: 1.2;
+    }
+
+    .status {
+        width: 12px;
+        height: 12px;
+        border-radius: 6px;
+        flex-shrink: 0;
+    }
+
+    .blue {
+        background-color: blue;
+    }
+
+    .gray {
+        background-color: gray;
+    }
+
+    .red {
+        background-color: red;
+    }
+
+    .orange {
+        background-color: orange;
     }
 </style>
 
 @code {
     [Parameter]
-    public string Label { get; set; }
+    public IServerInfo? ServerInfo { get; set; }
 }

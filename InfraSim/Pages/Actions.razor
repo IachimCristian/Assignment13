@@ -1,25 +1,131 @@
 @using Microsoft.AspNetCore.Components
+@using InfraSim.Models.Server
+@using InfraSim.Models.Mediator
+@inject IServerFactory ServerFactory
+@inject ICommandManager CommandManager
 
-<div class="div-container">
+<style>
+.actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.pill-button {
+    padding: 10px 10px;
+    border: none;
+    border-radius: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.green-button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.gray-button {
+    background-color: #cccccc;
+    color: #333;
+}
+
+.controls-container {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.round-button {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+}
+</style>
+
+<div class="actions-container">
     <button class="pill-button green-button" @onclick="HandleStartClick">Start</button>
-    <button class="pill-button gray-button" @onclick="HandleAddClick">Add</button>
+    
+    <div class="button-container">
+        <button class="pill-button gray-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateCDN())">Add CDN</button>
+        <button class="pill-button gray-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateLoadBalancer())">Add LB</button>
+        <button class="pill-button gray-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateServer())">Add Server</button>
+        <button class="pill-button gray-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateCache())">Add Cache</button>
+        <button class="pill-button gray-button" @onclick="HandleReset">Reset</button>
+    </div>
+    
+    <div class="controls-container">
+        <button @onclick="Undo" disabled="@UndoDisabled" class="round-button">Undo</button>
+        <button @onclick="HandleRedo" disabled="@RedoDisabled" class="round-button">Redo</button>
+    </div>
 </div>
-
 
 @code {
     [Parameter]
     public EventCallback StartPressed { get; set; }
 
     [Parameter]
-    public EventCallback AddPressed { get; set; }
+    public EventCallback<IServer> AddPressed { get; set; }
+
+    [Parameter]
+    public EventCallback Refresh { get; set; }
+
+    [Parameter]
+    public EventCallback Reset { get; set; }
+
+    public bool UndoDisabled => !CommandManager.HasUndo;
+    public bool RedoDisabled => !CommandManager.HasRedo;
+
+    private bool isRedoing = false;
 
     private async Task HandleStartClick()
     {
         await StartPressed.InvokeAsync();
     }
 
-    private async Task HandleAddClick()
+    private async Task Undo()
     {
-        await AddPressed.InvokeAsync();
+        CommandManager.Undo();
+        await Refresh.InvokeAsync();
+    }
+
+    private async Task HandleRedo()
+    {
+        if (isRedoing || !CommandManager.HasRedo)
+            return;
+
+        try
+        {
+            isRedoing = true;
+            CommandManager.Redo();
+            await Refresh.InvokeAsync();
+            
+            // Delay to ensure UI is updated and state is consistent
+            await Task.Delay(50);
+            StateHasChanged();
+        }
+        finally
+        {
+            isRedoing = false;
+        }
+    }
+
+    private async Task HandleReset()
+    {
+        await Reset.InvokeAsync();
     }
 }

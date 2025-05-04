@@ -1,5 +1,7 @@
 using InfraSim.Models.Capability;
+using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace InfraSim.Models.Server
 {
@@ -20,6 +22,7 @@ namespace InfraSim.Models.Server
         {
             var capability = _capabilityFactory.Create(type);
             return _builder
+                .WithId(Guid.NewGuid())
                 .WithType(type)
                 .WithCapability(capability)
                 .Build();
@@ -48,25 +51,106 @@ namespace InfraSim.Models.Server
         public ICluster CreateCluster()
         {
             var capability = _capabilityFactory.Create(ServerType.Cluster);
-            return new Cluster(capability);
+            var cluster = new Cluster(capability);
+            
+            if (cluster.Id == Guid.Empty)
+            {
+                cluster.Id = Guid.NewGuid();
+            }
+            
+            return cluster;
         }
 
         public ICluster CreateGatewayCluster()
         {
-            var capability = _capabilityFactory.Create(ServerType.Cluster);
-            var cluster = new Cluster(capability);
-            var servers = _dataMapper.GetAll().Where(s => s.ServerType == ServerType.CDN || s.ServerType == ServerType.LoadBalancer).ToList();
-            cluster.Servers = servers;
-            return cluster;
+            try
+            {
+                ICluster cluster = CreateCluster();
+                Console.WriteLine($"=== ServerFactory: Creating gateway cluster with ID {cluster.Id} ===");
+                
+                // Check if we have existing servers in the database (only if not a reset operation)
+                var serversFromDb = _dataMapper.GetAll();
+                
+                if (serversFromDb != null && serversFromDb.Any())
+                {
+                    Console.WriteLine($"ServerFactory: Found {serversFromDb.Count} servers in database");
+                    
+                    // Find CDN and LoadBalancer servers
+                    var gatewayServers = serversFromDb.Where(s => 
+                        s.ServerType == ServerType.CDN || 
+                        s.ServerType == ServerType.LoadBalancer).ToList();
+                    
+                    Console.WriteLine($"ServerFactory: Adding {gatewayServers.Count} gateway servers to cluster");
+                    foreach (var server in gatewayServers)
+                    {
+                        // Don't add clusters to avoid circular references
+                        if (server.ServerType != ServerType.Cluster && !cluster.Servers.Contains(server))
+                        {
+                            cluster.AddServer(server);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("ServerFactory: No existing servers found for gateway cluster");
+                }
+                
+                return cluster;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in CreateGatewayCluster: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                // Create and return an empty cluster in case of error
+                return CreateCluster();
+            }
         }
 
         public ICluster CreateProcessorsCluster()
         {
-            var capability = _capabilityFactory.Create(ServerType.Cluster);
-            var cluster = new Cluster(capability);
-            var servers = _dataMapper.GetAll().Where(s => s.ServerType == ServerType.Cache || s.ServerType == ServerType.Server).ToList();
-            cluster.Servers = servers;
-            return cluster;
+            try
+            {
+                ICluster cluster = CreateCluster();
+                Console.WriteLine($"=== ServerFactory: Creating processors cluster with ID {cluster.Id} ===");
+                
+                // Check if we have existing servers in the database (only if not a reset operation)
+                var serversFromDb = _dataMapper.GetAll();
+                
+                if (serversFromDb != null && serversFromDb.Any())
+                {
+                    Console.WriteLine($"ServerFactory: Found {serversFromDb.Count} servers in database");
+                    
+                    // Find Cache and Server servers
+                    var processorServers = serversFromDb.Where(s => 
+                        s.ServerType == ServerType.Cache || 
+                        s.ServerType == ServerType.Server).ToList();
+                    
+                    Console.WriteLine($"ServerFactory: Adding {processorServers.Count} processor servers to cluster");
+                    foreach (var server in processorServers)
+                    {
+                        // Don't add clusters to avoid circular references
+                        if (server.ServerType != ServerType.Cluster && !cluster.Servers.Contains(server))
+                        {
+                            cluster.AddServer(server);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("ServerFactory: No existing servers found for processors cluster");
+                }
+                
+                return cluster;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in CreateProcessorsCluster: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                // Create and return an empty cluster in case of error
+                return CreateCluster();
+            }
         }
     }
 } 

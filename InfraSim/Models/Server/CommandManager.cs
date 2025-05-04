@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace InfraSim.Models.Server
 {
@@ -19,6 +21,8 @@ namespace InfraSim.Models.Server
             Commands.Add(command);
             command.Do();
             Position++;
+            
+            Debug.WriteLine($"Command executed. Position: {Position}, Commands count: {Commands.Count}");
         }
 
         public void Undo()
@@ -27,6 +31,7 @@ namespace InfraSim.Models.Server
             {
                 Position--;
                 Commands[Position].Undo();
+                Debug.WriteLine($"Command undone. Position: {Position}, Commands count: {Commands.Count}");
             }
         }
 
@@ -34,8 +39,23 @@ namespace InfraSim.Models.Server
         {
             if (HasRedo)
             {
-                Commands[Position].Redo();
-                Position++;
+                try
+                {
+                    var currentPosition = Position;
+                    var command = Commands[currentPosition];
+                    
+                    command.Redo();
+                    
+                    Position++;
+                    
+                    Debug.WriteLine($"Command redone. Position: {Position}, Commands count: {Commands.Count}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error during Redo in CommandManager: {ex.Message}");
+                    
+                    Debug.WriteLine($"Redo failed, position unchanged: {Position}");
+                }
             }
         }
     }

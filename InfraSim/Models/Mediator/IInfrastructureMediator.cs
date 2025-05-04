@@ -9,5 +9,6 @@ namespace InfraSim.Models.Mediator
         void AddServer(IServer server);
         IServerIterator Iterator { get; }
         IServerIterator CreateServerIterator();
+        int TotalCost { get; }
     }
 } 

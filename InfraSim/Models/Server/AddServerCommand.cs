@@ -1,3 +1,5 @@
+using System;
+
 namespace InfraSim.Models.Server
 {
     public class AddServerCommand : ICommand
@@ -7,13 +9,44 @@ namespace InfraSim.Models.Server
 
         public AddServerCommand(IServerList listServer, IServer server, IServerDataMapper dataMapper)
         {
+            // Ensure the IDs are valid
+            if (listServer is IServer parentServer && parentServer.Id == Guid.Empty)
+            {
+                parentServer.Id = Guid.NewGuid();
+            }
+            
+            if (server != null && server.Id == Guid.Empty)
+            {
+                server.Id = Guid.NewGuid();
+            }
+            
             _proxy = new ListServerProxy((ICluster)listServer, dataMapper);
             _server = server;
         }
 
         public void Do()
         {
-            _proxy.AddServer(_server);
+            try
+            {
+                Console.WriteLine($"AddServerCommand: Adding server {_server.Id} of type {_server.ServerType} to cluster");
+                
+                // Ensure the server has a valid ID
+                if (_server.Id == Guid.Empty)
+                {
+                    _server.Id = Guid.NewGuid();
+                    Console.WriteLine($"Generated new ID for server: {_server.Id}");
+                }
+                
+                // Use the proxy to add the server, which will persist to the database
+                _proxy.AddServer(_server);
+                
+                Console.WriteLine($"AddServerCommand: Server {_server.Id} added successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"AddServerCommand ERROR: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
         }
 
         public void Undo()
@@ -23,7 +56,21 @@ namespace InfraSim.Models.Server
 
         public void Redo()
         {
-            Do();
+            try
+            {
+                _proxy.AddServer(_server);
+            }
+            catch (System.Exception ex)
+            {
+                // Log the error but don't crash the application
+                System.Diagnostics.Debug.WriteLine($"Error during Redo operation: {ex.Message}");
+                
+                // Make sure the server is in the cluster's collection even if DB operation failed
+                if (!((ICluster)_proxy).Servers.Contains(_server))
+                {
+                    ((ICluster)_proxy).AddServer(_server);
+                }
+            }
         }
     }
 } 

@@ -17,7 +17,8 @@ namespace InfraSim.Tests
         {
             Server = new DbServer { // Initializing the server for the test 
                 Id = Guid.NewGuid(),
-                ServerType = ServerType.Server
+                ServerType = ServerType.Server,
+                ParentId = null
             };
 
             Context = new MemoryInfraSimContext();

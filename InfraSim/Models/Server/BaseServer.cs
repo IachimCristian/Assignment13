@@ -30,6 +30,7 @@ namespace InfraSim.Models.Server
 
         protected BaseServer(ServerType serverType, IServerCapability serverCapability)
         {
+            Id = Guid.NewGuid();
             ServerType = serverType;
             ServerCapability = serverCapability;
             _healthCheck = new ServerHealthCheck(this);

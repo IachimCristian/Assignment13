@@ -9,5 +9,8 @@ namespace InfraSim.Models.Server
         IServer? Get(Guid id);
         void Insert(IServer server);
         void Remove(IServer server);
+        bool RemoveAll();
+        void AddClusterRelationship(IServer parent, IServer child);
+        List<IServer> GetClusterChildren(Guid parentId);
     }
 } 
