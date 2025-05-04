@@ -7,7 +7,6 @@ namespace InfraSim.Models.Db
     {
         public ServerType ServerType { get; set; }
         
-        // For representing cluster relationships (parent-child)
         public Guid? ParentId { get; set; }
     }
 } 

@@ -68,14 +68,12 @@ namespace InfraSim.Models.Server
                 ICluster cluster = CreateCluster();
                 Console.WriteLine($"=== ServerFactory: Creating gateway cluster with ID {cluster.Id} ===");
                 
-                // Check if we have existing servers in the database (only if not a reset operation)
                 var serversFromDb = _dataMapper.GetAll();
                 
                 if (serversFromDb != null && serversFromDb.Any())
                 {
                     Console.WriteLine($"ServerFactory: Found {serversFromDb.Count} servers in database");
                     
-                    // Find CDN and LoadBalancer servers
                     var gatewayServers = serversFromDb.Where(s => 
                         s.ServerType == ServerType.CDN || 
                         s.ServerType == ServerType.LoadBalancer).ToList();
@@ -83,7 +81,6 @@ namespace InfraSim.Models.Server
                     Console.WriteLine($"ServerFactory: Adding {gatewayServers.Count} gateway servers to cluster");
                     foreach (var server in gatewayServers)
                     {
-                        // Don't add clusters to avoid circular references
                         if (server.ServerType != ServerType.Cluster && !cluster.Servers.Contains(server))
                         {
                             cluster.AddServer(server);
@@ -102,7 +99,6 @@ namespace InfraSim.Models.Server
                 Console.WriteLine($"ERROR in CreateGatewayCluster: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 
-                // Create and return an empty cluster in case of error
                 return CreateCluster();
             }
         }
@@ -114,14 +110,12 @@ namespace InfraSim.Models.Server
                 ICluster cluster = CreateCluster();
                 Console.WriteLine($"=== ServerFactory: Creating processors cluster with ID {cluster.Id} ===");
                 
-                // Check if we have existing servers in the database (only if not a reset operation)
                 var serversFromDb = _dataMapper.GetAll();
                 
                 if (serversFromDb != null && serversFromDb.Any())
                 {
                     Console.WriteLine($"ServerFactory: Found {serversFromDb.Count} servers in database");
                     
-                    // Find Cache and Server servers
                     var processorServers = serversFromDb.Where(s => 
                         s.ServerType == ServerType.Cache || 
                         s.ServerType == ServerType.Server).ToList();
@@ -129,7 +123,6 @@ namespace InfraSim.Models.Server
                     Console.WriteLine($"ServerFactory: Adding {processorServers.Count} processor servers to cluster");
                     foreach (var server in processorServers)
                     {
-                        // Don't add clusters to avoid circular references
                         if (server.ServerType != ServerType.Cluster && !cluster.Servers.Contains(server))
                         {
                             cluster.AddServer(server);
@@ -148,7 +141,6 @@ namespace InfraSim.Models.Server
                 Console.WriteLine($"ERROR in CreateProcessorsCluster: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 
-                // Create and return an empty cluster in case of error
                 return CreateCluster();
             }
         }

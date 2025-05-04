@@ -76,22 +76,19 @@
     {
         try
         {
-            Console.WriteLine("=== ResetServers: Starting complete database reset ===");
+            Console.WriteLine("=== ResetServers: Starting complete database reset ==="); // Starting the complete database 
             
-            // Remove all servers from the database using our new method
             bool databaseResetSuccess = ServerDataMapper.RemoveAll();
             Console.WriteLine($"Database reset {(databaseResetSuccess ? "successful" : "FAILED")}");
             
-            // Clear in-memory servers
             if (InfrastructureMediator.Gateway != null)
             {
-                // Make a copy of the list to avoid modification while enumeration
                 var gatewayServers = InfrastructureMediator.Gateway.Servers.ToList();
                 
                 foreach (var server in gatewayServers)
                 {
                     if (server is ICluster && server == InfrastructureMediator.Processors)
-                        continue; // Skip the Processors cluster
+                        continue; 
                     
                     Console.WriteLine($"Removing server {server.Id} from Gateway");
                     InfrastructureMediator.Gateway.RemoveServer(server);
@@ -100,7 +97,6 @@
             
             if (InfrastructureMediator.Processors != null)
             {
-                // Make a copy of the list to avoid modification while enumeration
                 var processorServers = InfrastructureMediator.Processors.Servers.ToList();
                 
                 foreach (var server in processorServers)
@@ -110,10 +106,8 @@
                 }
             }
             
-            // Reset user counter
-            userCounter.Reset();
+            userCounter.Reset(); // Reset the user counter
             
-            // Force recreation of base infrastructure (Gateway and Processors)
             Console.WriteLine("Forcefully recreating infrastructure clusters");
             var resetMethod = typeof(InfrastructureMediator).GetMethod("CreateNewClusters", 
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -129,7 +123,6 @@
                 Console.WriteLine("WARNING: Could not find CreateNewClusters method, reset may be incomplete");
             }
             
-            // Check database state after reset
             var servers = ServerDataMapper.GetAll();
             Console.WriteLine($"After reset: Database contains {servers?.Count ?? 0} servers");
             
@@ -144,8 +137,7 @@
             
             Console.WriteLine("All servers have been reset from both memory and database");
             
-            // Refresh UI
-            RefreshUI();
+            RefreshUI(); // Refresh the UI
         }
         catch (Exception ex)
         {
@@ -154,7 +146,7 @@
         }
     }
 
-    protected override void OnInitialized()
+    protected override void OnInitialized() // OnInitialized is called when the page is initialized 
     {
         userCounter.OnCounterChanged += StateHasChanged;
         RefreshUI();
@@ -162,11 +154,11 @@
 
     private async Task StartIncrementing()
     {
-        await userCounter.StartIncrementingAsync(); // Start the incrementing
+        await userCounter.StartIncrementingAsync(); 
     }
 
-    public void Dispose() // Dispose of the user counter
+    public void Dispose() 
     {
-        userCounter.OnCounterChanged -= StateHasChanged; // Unsubscribe from the counter changed event
+        userCounter.OnCounterChanged -= StateHasChanged; 
     }
 }

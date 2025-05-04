@@ -9,12 +9,10 @@ namespace InfraSim.Models.Db
         private static readonly string DbFileName = "InfraSim.db";
         private static readonly string DbPath;
         
-        // Static constructor to initialize database path once
         static InfraSimContext()
         {
             try
             {
-                // Use absolute path for database in a fixed location
                 string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string infraSimFolder = Path.Combine(appDataPath, "InfraSim");
                 
@@ -29,7 +27,6 @@ namespace InfraSim.Models.Db
             catch (Exception ex)
             {
                 Console.WriteLine($"Error initializing database path: {ex.Message}");
-                // Fallback to current directory
                 DbPath = Path.Combine(Directory.GetCurrentDirectory(), DbFileName);
             }
         }
@@ -40,7 +37,6 @@ namespace InfraSim.Models.Db
         {
             try
             {
-                // Check if the database file exists
                 bool exists = File.Exists(DbPath);
                 
                 Console.WriteLine($"=== DATABASE INFO ===");
@@ -60,11 +56,9 @@ namespace InfraSim.Models.Db
         {
             try
             {
-                // Configure your DbServer
                 modelBuilder.Entity<DbServer>()
                     .HasKey(s => s.Id);
                 
-                // Make ParentId a foreign key relationship
                 modelBuilder.Entity<DbServer>()
                     .Property(s => s.ParentId)
                     .IsRequired(false);

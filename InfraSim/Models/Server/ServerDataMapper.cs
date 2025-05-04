@@ -25,7 +25,6 @@ namespace InfraSim.Models.Server
                 var repository = _unitOfWork.GetRepository<DbServer>();
                 var dbServers = repository.GetAll().ToList();
                 
-                // Diagnostic logging
                 Console.WriteLine($"=== DIAGNOSTIC: Found {dbServers.Count} servers in database ===");
                 foreach (var srv in dbServers)
                 {
@@ -86,18 +85,15 @@ namespace InfraSim.Models.Server
         {
             try
             {
-                // Check if entity with this ID already exists in database
                 var repo = _unitOfWork.GetRepository<DbServer>();
                 var existing = repo.Get(server.Id);
 
                 if (existing == null)
                 {
-                    // Entity doesn't exist - proceed with insert
                     var db = new DbServer { Id = server.Id, ServerType = server.ServerType };
                     repo.Insert(db);
                     _unitOfWork.SaveChanges();
                     
-                    // Verify the server was actually inserted
                     var inserted = repo.Get(server.Id);
                     if (inserted != null)
                     {
@@ -115,8 +111,6 @@ namespace InfraSim.Models.Server
             }
             catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("duplicate key") == true)
             {
-                // Handle case where entity was inserted concurrently (race condition)
-                // This is a safety mechanism for concurrent operations
                 System.Diagnostics.Debug.WriteLine($"Server {server.Id} already exists (concurrent insert)");
                 Console.WriteLine($"Duplicate key exception when inserting server {server.Id}: {ex.Message}");
             }
@@ -135,21 +129,17 @@ namespace InfraSim.Models.Server
                 Console.WriteLine($"=== AddClusterRelationship: Setting ParentId={parent.Id} for child={child.Id} ===");
                 var repo = _unitOfWork.GetRepository<DbServer>();
                 
-                // Update the child record to reference its parent
                 var dbChild = repo.Get(child.Id);
                 if (dbChild != null)
                 {
                     Console.WriteLine($"Found child server {child.Id} in database, current ParentId={dbChild.ParentId}");
                     
-                    // Set the parent ID relationship
                     dbChild.ParentId = parent.Id;
                     Console.WriteLine($"Updated ParentId to {parent.Id}");
                     
-                    // Update and save explicitly
                     repo.Update(dbChild);
                     _unitOfWork.SaveChanges();
                     
-                    // Verify the update was saved
                     var verifiedChild = repo.Get(child.Id);
                     if (verifiedChild != null)
                     {
@@ -168,7 +158,6 @@ namespace InfraSim.Models.Server
                 {
                     Console.WriteLine($"Child server {child.Id} not found in database, attempting to create it");
                     
-                    // Try to insert the child first since it's missing
                     var newDbChild = new DbServer 
                     { 
                         Id = child.Id, 
@@ -176,7 +165,6 @@ namespace InfraSim.Models.Server
                         ParentId = parent.Id
                     };
                     
-                    // Begin a transaction for this operation
                     _unitOfWork.Begin();
                     
                     try
@@ -186,7 +174,6 @@ namespace InfraSim.Models.Server
                         _unitOfWork.SaveChanges();
                         _unitOfWork.Commit();
                         
-                        // Verify the insert was saved
                         var verifiedNew = repo.Get(child.Id);
                         if (verifiedNew != null)
                         {
@@ -210,7 +197,6 @@ namespace InfraSim.Models.Server
                         _unitOfWork.Rollback();
                         Console.WriteLine($"Error creating child server: {innerEx.Message}");
                         
-                        // One more attempt - check if another thread created it while we were working
                         dbChild = repo.Get(child.Id);
                         if (dbChild != null)
                         {
@@ -219,7 +205,6 @@ namespace InfraSim.Models.Server
                             repo.Update(dbChild);
                             _unitOfWork.SaveChanges();
                             
-                            // Verify the update was saved
                             var verifiedRetry = repo.Get(child.Id);
                             if (verifiedRetry != null && verifiedRetry.ParentId == parent.Id)
                             {
@@ -302,31 +287,26 @@ namespace InfraSim.Models.Server
                 {
                     Console.WriteLine("=== ServerDataMapper.RemoveAll: Resetting all server data ===");
                     
-                    // First, set all ParentIds to NULL to avoid foreign key constraints
                     Console.WriteLine("Setting all ParentIds to NULL...");
                     var nullParentIdCommand = "UPDATE DbServers SET ParentId = NULL";
                     context.Database.ExecuteSqlRaw(nullParentIdCommand);
                     
-                    // Then delete all records from the DbServers table
                     Console.WriteLine("Deleting all servers from database...");
                     var deleteCommand = "DELETE FROM DbServers";
                     var rowsAffected = context.Database.ExecuteSqlRaw(deleteCommand);
                     
                     Console.WriteLine($"RemoveAll: Deleted {rowsAffected} server records from database");
                     
-                    // Verify the table is empty
                     var remainingServers = context.DbServers.Count();
                     if (remainingServers > 0)
                     {
                         Console.WriteLine($"WARNING: After RemoveAll, {remainingServers} servers still exist in the database");
                         
-                        // Try one more approach - clear the entire DbSet
                         Console.WriteLine("Attempting to remove servers using RemoveRange...");
                         var allServers = context.DbServers.ToList();
                         context.DbServers.RemoveRange(allServers);
                         context.SaveChanges();
                         
-                        // Final verification
                         remainingServers = context.DbServers.Count();
                         Console.WriteLine($"After RemoveRange: {remainingServers} servers remaining in database");
                     }

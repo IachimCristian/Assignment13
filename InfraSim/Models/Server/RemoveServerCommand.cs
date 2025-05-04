@@ -29,10 +29,8 @@ namespace InfraSim.Models.Server
             }
             catch (System.Exception ex)
             {
-                // Log the error but don't crash the application
                 System.Diagnostics.Debug.WriteLine($"Error during Redo operation: {ex.Message}");
                 
-                // Make sure the server is removed from the cluster's collection even if DB operation failed
                 if (((ICluster)_proxy).Servers.Contains(_server))
                 {
                     ((ICluster)_proxy).RemoveServer(_server);
