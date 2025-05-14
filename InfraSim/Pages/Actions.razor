@@ -65,7 +65,6 @@
         <button class="pill-button gray-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateLoadBalancer())">Add LB</button>
         <button class="pill-button gray-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateServer())">Add Server</button>
         <button class="pill-button gray-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateCache())">Add Cache</button>
-        <button class="pill-button gray-button" @onclick="HandleReset">Reset</button>
     </div>
     
     <div class="controls-container">
@@ -83,9 +82,6 @@
 
     [Parameter]
     public EventCallback Refresh { get; set; }
-
-    [Parameter]
-    public EventCallback Reset { get; set; }
 
     public bool UndoDisabled => !CommandManager.HasUndo;
     public bool RedoDisabled => !CommandManager.HasRedo;
@@ -114,7 +110,6 @@
             CommandManager.Redo();
             await Refresh.InvokeAsync();
             
-            // Delay to ensure UI is updated and state is consistent
             await Task.Delay(50);
             StateHasChanged();
         }
@@ -122,10 +117,5 @@
         {
             isRedoing = false;
         }
-    }
-
-    private async Task HandleReset()
-    {
-        await Reset.InvokeAsync();
     }
 }

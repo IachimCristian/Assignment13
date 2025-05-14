@@ -9,7 +9,6 @@ namespace InfraSim.Models.Server
 
         public AddServerCommand(IServerList listServer, IServer server, IServerDataMapper dataMapper)
         {
-            // Ensure the IDs are valid
             if (listServer is IServer parentServer && parentServer.Id == Guid.Empty)
             {
                 parentServer.Id = Guid.NewGuid();
@@ -62,10 +61,8 @@ namespace InfraSim.Models.Server
             }
             catch (System.Exception ex)
             {
-                // Log the error but don't crash the application
                 System.Diagnostics.Debug.WriteLine($"Error during Redo operation: {ex.Message}");
                 
-                // Make sure the server is in the cluster's collection even if DB operation failed
                 if (!((ICluster)_proxy).Servers.Contains(_server))
                 {
                     ((ICluster)_proxy).AddServer(_server);

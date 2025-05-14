@@ -55,7 +55,6 @@ namespace InfraSim.Models.Db
         {
             try
             {
-                // Check if entity is already being tracked
                 var existing = Context.Set<TEntity>().Local.FirstOrDefault(e => e.Id == item.Id);
                 if (existing != null)
                 {
@@ -78,34 +77,28 @@ namespace InfraSim.Models.Db
             var existingEntry = Context.Entry(item);
             if (existingEntry.State == EntityState.Detached)
             {
-                // If entity is not being tracked, attach it first
                 var attachedEntity = Context.Set<TEntity>().Local.FirstOrDefault(e => e.Id == item.Id);
                 if (attachedEntity != null)
                 {
-                    // Update values from item to attached entity
                     Context.Entry(attachedEntity).CurrentValues.SetValues(item);
                 }
                 else
                 {
-                    // Attach and mark as modified
                     Context.Set<TEntity>().Attach(item);
                     Context.Entry(item).State = EntityState.Modified;
                 }
             }
             else
             {
-                // Entity is being tracked, mark as modified
                 existingEntry.State = EntityState.Modified;
             }
         }
 
         public void Delete(TEntity item)
         {
-            // Handle potentially detached entities
             var existingEntry = Context.Entry(item);
             if (existingEntry.State == EntityState.Detached)
             {
-                // If it's detached, find the attached version if it exists
                 var attachedEntity = Context.Set<TEntity>().Local.FirstOrDefault(e => e.Id == item.Id);
                 if (attachedEntity != null)
                 {
@@ -113,14 +106,12 @@ namespace InfraSim.Models.Db
                 }
                 else
                 {
-                    // If not in local tracking, attach and remove
                     Context.Set<TEntity>().Attach(item);
                     Context.Remove(item);
                 }
             }
             else
             {
-                // Entity is being tracked, remove it
                 Context.Remove(item);
             }
         }

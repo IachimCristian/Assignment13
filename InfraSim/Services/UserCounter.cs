@@ -35,17 +35,4 @@ public class UserCounter
             _isIncrementing = false;
         }
     }
-    
-    public void Reset()
-    {
-        // Cancel any ongoing incrementing
-        if (_isIncrementing && _cts != null)
-        {
-            _cts.Cancel();
-            _isIncrementing = false;
-        }
-        
-        Counter = 0;
-        OnCounterChanged?.Invoke();
-    }
 }

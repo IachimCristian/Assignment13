@@ -42,7 +42,7 @@
 
 <div class="container">
     <div class="control-panel">
-        <Actions StartPressed="@StartIncrementing" AddPressed="@AddServer" Refresh="RefreshUI" Reset="ResetServers" />
+        <Actions StartPressed="@StartIncrementing" AddPressed="@AddServer" Refresh="RefreshUI" />
         <Users UserCount="@userCounter.Counter" />
         <div class="cost-display">€ @InfrastructureMediator.TotalCost.ToString("N0")</div>
     </div>
@@ -70,80 +70,6 @@
     {
         InfrastructureMediator.AddServer(server);
         RefreshUI();
-    }
-    
-    private void ResetServers()
-    {
-        try
-        {
-            Console.WriteLine("=== ResetServers: Starting complete database reset ==="); // Starting the complete database 
-            
-            bool databaseResetSuccess = ServerDataMapper.RemoveAll();
-            Console.WriteLine($"Database reset {(databaseResetSuccess ? "successful" : "FAILED")}");
-            
-            if (InfrastructureMediator.Gateway != null)
-            {
-                var gatewayServers = InfrastructureMediator.Gateway.Servers.ToList();
-                
-                foreach (var server in gatewayServers)
-                {
-                    if (server is ICluster && server == InfrastructureMediator.Processors)
-                        continue; 
-                    
-                    Console.WriteLine($"Removing server {server.Id} from Gateway");
-                    InfrastructureMediator.Gateway.RemoveServer(server);
-                }
-            }
-            
-            if (InfrastructureMediator.Processors != null)
-            {
-                var processorServers = InfrastructureMediator.Processors.Servers.ToList();
-                
-                foreach (var server in processorServers)
-                {
-                    Console.WriteLine($"Removing server {server.Id} from Processors");
-                    InfrastructureMediator.Processors.RemoveServer(server);
-                }
-            }
-            
-            userCounter.Reset(); // Reset the user counter
-            
-            Console.WriteLine("Forcefully recreating infrastructure clusters");
-            var resetMethod = typeof(InfrastructureMediator).GetMethod("CreateNewClusters", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            if (resetMethod != null)
-            {
-                Console.WriteLine("Found CreateNewClusters method, invoking it");
-                resetMethod.Invoke(InfrastructureMediator, null);
-                Console.WriteLine("Successfully recreated infrastructure clusters");
-            }
-            else
-            {
-                Console.WriteLine("WARNING: Could not find CreateNewClusters method, reset may be incomplete");
-            }
-            
-            var servers = ServerDataMapper.GetAll();
-            Console.WriteLine($"After reset: Database contains {servers?.Count ?? 0} servers");
-            
-            if (servers != null && servers.Any())
-            {
-                Console.WriteLine("Server types in database after reset:");
-                foreach (var server in servers)
-                {
-                    Console.WriteLine($"  - {server.ServerType} with ID {server.Id}");
-                }
-            }
-            
-            Console.WriteLine("All servers have been reset from both memory and database");
-            
-            RefreshUI(); // Refresh the UI
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error resetting servers: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-        }
     }
 
     protected override void OnInitialized() // OnInitialized is called when the page is initialized 
