@@ -8,11 +8,18 @@ namespace InfraSim.Models.Server
     {
         public List<IServer> Servers { get; set; }
 
-        public Cluster(IServerCapability serverCapability) 
-            : base(ServerType.Cluster, serverCapability)
+        public Cluster(IServerCapability capability) 
+            : base(ServerType.Cluster, capability)
         {
             Servers = new List<IServer>();
-        } 
+        }
+
+        public Cluster(IServerCapability capability, IValidatorStrategy validator) 
+            : base(ServerType.Cluster, capability)
+        {
+            Servers = new List<IServer>();
+            Validator = validator;
+        }
 
         public void AddServer(IServer server)
         {

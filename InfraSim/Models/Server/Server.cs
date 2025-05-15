@@ -9,5 +9,11 @@ namespace InfraSim.Models.Server
             : base(serverType, serverCapability)
         {
         }
+
+        public Server(ServerType serverType, IServerCapability capability, IValidatorStrategy validator) 
+            : base(serverType, capability)
+        {
+            Validator = validator;
+        }
     }
 } 

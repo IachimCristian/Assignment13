@@ -23,10 +23,12 @@ namespace InfraSim.Models.Server
             }
         }
 
-        public ServerType ServerType { get; }
+        public ServerType ServerType { get; protected set; }
         public IServerCapability ServerCapability { get; }
         public IServerState State { get; set; }
         private IServerHealthCheck _healthCheck;
+        public IServerCapability Capability { get; }
+        public IValidatorStrategy Validator { get; protected set; }
 
         protected BaseServer(ServerType serverType, IServerCapability serverCapability)
         {

@@ -25,6 +25,7 @@ namespace InfraSim.Models.Server
                 .WithId(Guid.NewGuid())
                 .WithType(type)
                 .WithCapability(capability)
+                .WithValidator(new ServerValidator())
                 .Build();
         }
 
@@ -51,7 +52,7 @@ namespace InfraSim.Models.Server
         public ICluster CreateCluster()
         {
             var capability = _capabilityFactory.Create(ServerType.Cluster);
-            var cluster = new Cluster(capability);
+            var cluster = new Cluster(capability, new ServerValidator());
             
             if (cluster.Id == Guid.Empty)
             {
@@ -65,7 +66,10 @@ namespace InfraSim.Models.Server
         {
             try
             {
-                ICluster cluster = CreateCluster();
+                var capability = _capabilityFactory.Create(ServerType.Cluster);
+                var cluster = new Cluster(capability, new GatewayValidator());
+                cluster.Id = Guid.NewGuid();
+                
                 Console.WriteLine($"=== ServerFactory: Creating gateway cluster with ID {cluster.Id} ===");
                 
                 var serversFromDb = _dataMapper.GetAll();
@@ -107,7 +111,10 @@ namespace InfraSim.Models.Server
         {
             try
             {
-                ICluster cluster = CreateCluster();
+                var capability = _capabilityFactory.Create(ServerType.Cluster);
+                var cluster = new Cluster(capability, new ProcessorsValidator());
+                cluster.Id = Guid.NewGuid();
+                
                 Console.WriteLine($"=== ServerFactory: Creating processors cluster with ID {cluster.Id} ===");
                 
                 var serversFromDb = _dataMapper.GetAll();

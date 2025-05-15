@@ -10,6 +10,7 @@ namespace InfraSim.Models.Server
         IServerBuilder WithType(ServerType type);
         IServerBuilder WithCapability(IServerCapability capability);
         IServerBuilder WithState(IServerState state);
-        Server Build();
+        IServerBuilder WithValidator(IValidatorStrategy validator);
+        IServer Build();
     }
 } 

@@ -14,11 +14,16 @@ namespace InfraSim.Models.Server
         ServerType ServerType { get; }
         IServerCapability ServerCapability { get; }
         int RequestsCount { get; set; }
+        IServerState State { get; set; }
+        IServerCapability Capability { get; }
+        IValidatorStrategy Validator { get; }
         
         /// <summary>
         /// Handles a specified number of requests
         /// </summary>
         /// <param name="requestsCount">The number of requests to handle</param>
         void HandleRequests(int requestsCount);
+
+        void Accept(IServerVisitor visitor);
     }
 } 

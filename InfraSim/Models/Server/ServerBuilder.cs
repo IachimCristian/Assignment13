@@ -6,10 +6,11 @@ namespace InfraSim.Models.Server
 {
     public class ServerBuilder : IServerBuilder
     {
-        private Guid _id = Guid.Empty;
-        private ServerType _type = ServerType.Server;
-        private IServerCapability _capability = new ServerCapability();
+        private Guid _id;
+        private ServerType _type;
+        private IServerCapability _capability;
         private IServerState _state = new IdleState();
+        private IValidatorStrategy _validator = new ServerValidator();
 
         public IServerBuilder WithId(Guid id)
         {
@@ -35,14 +36,27 @@ namespace InfraSim.Models.Server
             return this;
         }
 
-        public Server Build()
+        public IServerBuilder WithValidator(IValidatorStrategy validator)
         {
-            var server = new Server(_type, _capability);
-            server.State = _state;
-            if (_id != Guid.Empty)
-                server.Id = _id;
+            _validator = validator;
+            return this;
+        }
+
+        public IServer Build()
+        {
+            IServer server;
+            
+            if (_type == ServerType.Cluster)
+            {
+                server = new Cluster(_capability, _validator);
+            }
             else
-                server.Id = Guid.NewGuid();
+            {
+                server = new Server(_type, _capability, _validator);
+            }
+            
+            server.Id = _id;
+            server.State = _state;
             return server;
         }
     }
