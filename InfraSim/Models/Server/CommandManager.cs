@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using InfraSim.Models.Db;
 
 namespace InfraSim.Models.Server
 {
@@ -23,6 +25,54 @@ namespace InfraSim.Models.Server
             Position++;
             
             Debug.WriteLine($"Command executed. Position: {Position}, Commands count: {Commands.Count}");
+
+            if (command is AddServerCommand addCmd)
+            {
+                SaveToDb(addCmd);
+            }
+        }
+
+        private void SaveToDb(AddServerCommand cmd)
+        {
+            using (var context = new InfraSimContext())
+            {
+                var existing = context.DbServers.Find(cmd.GetServerId());
+                if (existing == null)
+                {
+                    // Save server but don't use Position property yet
+                    context.DbServers.Add(new DbServer
+                    {
+                        Id = cmd.GetServerId(),
+                        ServerType = cmd.GetServerType(),
+                        ParentId = Guid.Empty // optional marker
+                    });
+
+                    context.SaveChanges();
+                }
+            }
+        }
+
+        public void Load(ICommand command)
+        {
+            Commands.Add(command);
+            Position++;
+        }
+
+        // Load commands in the correct order based on their position
+        public void LoadCommands(List<ICommand> commands)
+        {
+            // Clear existing commands
+            Commands.Clear();
+            Position = 0;
+            
+            // Add commands
+            foreach (var command in commands)
+            {
+                Commands.Add(command);
+                Position++;
+            }
+            
+            Debug.WriteLine($"Loaded {Commands.Count} commands. Position: {Position}");
         }
 
         public void Undo()

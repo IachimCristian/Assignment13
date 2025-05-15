@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace InfraSim.Models.Server
 {
     public interface ICommandManager
@@ -7,5 +9,7 @@ namespace InfraSim.Models.Server
         void Execute(ICommand command);
         void Undo();
         void Redo();
+        void Load(ICommand command);
+        void LoadCommands(List<ICommand> commands);
     }
 } 

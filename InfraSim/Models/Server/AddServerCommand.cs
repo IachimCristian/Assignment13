@@ -29,14 +29,12 @@ namespace InfraSim.Models.Server
             {
                 Console.WriteLine($"AddServerCommand: Adding server {_server.Id} of type {_server.ServerType} to cluster");
                 
-                // Ensure the server has a valid ID
                 if (_server.Id == Guid.Empty)
                 {
                     _server.Id = Guid.NewGuid();
                     Console.WriteLine($"Generated new ID for server: {_server.Id}");
                 }
                 
-                // Use the proxy to add the server, which will persist to the database
                 _proxy.AddServer(_server);
                 
                 Console.WriteLine($"AddServerCommand: Server {_server.Id} added successfully");
@@ -68,6 +66,16 @@ namespace InfraSim.Models.Server
                     ((ICluster)_proxy).AddServer(_server);
                 }
             }
+        }
+
+        public System.Guid GetServerId()
+        {
+            return _server.Id;
+        }
+
+        public ServerType GetServerType()
+        {
+            return _server.ServerType;
         }
     }
 } 

@@ -3,6 +3,7 @@ using System.Linq;
 using System;
 using System.Collections.Generic;
 using InfraSim.Models.Capability;
+using InfraSim.Models.Db;
 
 namespace InfraSim.Models.Mediator
 {
@@ -11,7 +12,7 @@ namespace InfraSim.Models.Mediator
         public ICluster Gateway { get; private set; }
         public ICluster Processors { get; private set; }
         private readonly ICommandManager _commandManager;
-        private readonly IServerDataMapper _mapper;
+        private readonly IServerDataMapper _serverDataMapper;
         private readonly IServerFactory _serverFactory;
         private readonly ICapabilityFactory _capabilityFactory;
         
@@ -27,175 +28,84 @@ namespace InfraSim.Models.Mediator
             }
         }
 
-        public InfrastructureMediator(IServerFactory serverFactory, ICommandManager commandManager, IServerDataMapper mapper) // For the InfrastructureMediator 
+        public InfrastructureMediator(
+            ICommandManager commandManager,
+            IServerDataMapper serverDataMapper,
+            ICapabilityFactory capabilityFactory,
+            IServerFactory serverFactory)
         {
-            _serverFactory = serverFactory;
             _commandManager = commandManager;
-            _mapper = mapper;
-            
-            if (serverFactory != null && serverFactory is ServerFactory sf)
-            {
-                var field = typeof(ServerFactory).GetField("_capabilityFactory", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (field != null)
-                {
-                    _capabilityFactory = field.GetValue(sf) as ICapabilityFactory;
-                }
-            }
-            
-            Console.WriteLine("=== InfrastructureMediator: Initializing ===");
-            
-            bool isUnitTest = false;
-            if (_serverFactory != null && serverFactory.GetType().FullName.Contains("Mock"))
-            {
-                try
-                {
-                    Gateway = _serverFactory.CreateCluster();
-                    Processors = _serverFactory.CreateCluster();
-                    
-                    if (Gateway != null && Processors != null)
-                    {
-                        Gateway.AddServer(Processors);
-                        isUnitTest = true;
-                        
-                        Console.WriteLine("Unit test detected: Created clusters using CreateCluster");
-                    }
-                }
-                catch
-                {
-                    Gateway = null;
-                    Processors = null;
-                }
-            }
-            
-            if (!isUnitTest)
-            {
-                try
-                {
-                    List<IServer> allServers = null;
-                    if (_mapper != null)
-                    {
-                        try
-                        {
-                            allServers = _mapper.GetAll();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error getting servers from database: {ex.Message}");
-                        }
-                    }
-                    
-                    Console.WriteLine($"InfrastructureMediator: GetAll returned {allServers?.Count ?? 0} servers");
-                    
-                    if (allServers == null || !allServers.Any())
-                    {
-                        Console.WriteLine("InfrastructureMediator: No existing servers found, creating new clusters");
-                        CreateNewClusters();
-                        return;
-                    }
-                    
-                    Console.WriteLine("InfrastructureMediator: Looking for existing Gateway and Processors clusters");
-                    
-                    var gatewayFromDb = allServers.FirstOrDefault(s => s.ServerType == ServerType.Cluster && 
-                                                                allServers.Any(child => 
-                                                                    child.ServerType == ServerType.Cluster && 
-                                                                    child != s));
-                    
-                    if (gatewayFromDb != null)
-                    {
-                        Console.WriteLine($"InfrastructureMediator: Found Gateway cluster with ID {gatewayFromDb.Id}");
-                        
-                        if (gatewayFromDb is ICluster gatewayCluster)
-                        {
-                            Gateway = gatewayCluster;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"InfrastructureMediator: Gateway server is not a cluster object, creating new one with same ID {gatewayFromDb.Id}");
-                            Gateway = _serverFactory.CreateCluster();
-                            Gateway.Id = gatewayFromDb.Id;
-                        }
-                        
-                        var processorsFromDb = allServers.FirstOrDefault(s => 
-                            s.ServerType == ServerType.Cluster && s != gatewayFromDb);
-                        
-                        if (processorsFromDb != null)
-                        {
-                            Console.WriteLine($"InfrastructureMediator: Found Processors cluster with ID {processorsFromDb.Id}");
-                            
-                            if (processorsFromDb is ICluster processorsCluster)
-                            {
-                                Processors = processorsCluster;
-                            }
-                            else
-                            {
-                                Console.WriteLine($"InfrastructureMediator: Processors server is not a cluster object, creating new one with same ID {processorsFromDb.Id}");
-                                Processors = _serverFactory.CreateCluster();
-                                Processors.Id = processorsFromDb.Id;
-                            }
-                            
-                            if (!Gateway.Servers.Contains(Processors))
-                            {
-                                Console.WriteLine("InfrastructureMediator: Adding Processors to Gateway");
-                                Gateway.AddServer(Processors);
-                                _mapper.AddClusterRelationship(Gateway, Processors);
-                            }
-                            
-                            Console.WriteLine("InfrastructureMediator: Loading CDN and LoadBalancer into Gateway");
-                            int gatewayServersAdded = 0;
-                            foreach (var server in allServers.Where(s => 
-                                s.ServerType == ServerType.CDN || 
-                                s.ServerType == ServerType.LoadBalancer))
-                            {
-                                if (!Gateway.Servers.Contains(server))
-                                {
-                                    Gateway.AddServer(server);
-                                    gatewayServersAdded++;
-                                }
-                            }
-                            Console.WriteLine($"InfrastructureMediator: Added {gatewayServersAdded} servers to Gateway");
-                            
-                            Console.WriteLine("InfrastructureMediator: Loading Cache and Server into Processors");
-                            int processorServersAdded = 0;
-                            foreach (var server in allServers.Where(s => 
-                                s.ServerType == ServerType.Cache || 
-                                s.ServerType == ServerType.Server))
-                            {
-                                if (!Processors.Servers.Contains(server))
-                                {
-                                    Processors.AddServer(server);
-                                    processorServersAdded++;
-                                }
-                            }
-                            Console.WriteLine($"InfrastructureMediator: Added {processorServersAdded} servers to Processors");
-                        }
-                        else
-                        {
-                            Console.WriteLine("InfrastructureMediator: Processors cluster not found, creating new one");
-                            CreateNewProcessorsCluster();
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("InfrastructureMediator: Gateway cluster not found, creating new clusters");
-                        CreateNewClusters();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error during initialization: {ex.Message}");
-                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                    
-                    if (Gateway == null || Processors == null)
-                    {
-                        CreateNewClusters();
-                    }
-                }
-            }
-            
-            Console.WriteLine("=== InfrastructureMediator: Initialization complete ===");
+            _serverDataMapper = serverDataMapper;
+            _capabilityFactory = capabilityFactory;
+            _serverFactory = serverFactory;
+            CreateNewClusters();
+            RestoreLastCommand();
         }
         
+        private void RestoreLastCommand()
+        {
+            try
+            {
+                using (var context = new InfraSimContext())
+                {
+                    // Get all servers from DB without any ordering relying on Position
+                    var dbServers = context.Set<DbServer>().ToList();
+                    
+                    var commands = new List<ICommand>();
+
+                    foreach (var db in dbServers)
+                    {
+                        IServer server;
+                        switch (db.ServerType)
+                        {
+                            case ServerType.Cluster:
+                                // Skip clusters as they're created in CreateNewClusters
+                                continue;
+                            case ServerType.CDN:
+                                server = _serverFactory.CreateCDN();
+                                break;
+                            case ServerType.LoadBalancer:
+                                server = _serverFactory.CreateLoadBalancer();
+                                break;
+                            case ServerType.Cache:
+                                server = _serverFactory.CreateCache();
+                                break;
+                            case ServerType.Server:
+                                server = _serverFactory.CreateServer();
+                                break;
+                            default:
+                                continue;
+                        }
+                        
+                        server.Id = db.Id;
+
+                        // Add to proper parent cluster based on server type
+                        ICluster parent;
+                        if (db.ServerType == ServerType.CDN || db.ServerType == ServerType.LoadBalancer)
+                        {
+                            parent = Gateway;
+                        }
+                        else
+                        {
+                            parent = Processors;
+                        }
+                        
+                        // Create command
+                        var command = new AddServerCommand(parent, server, _serverDataMapper);
+                        commands.Add(command);
+                    }
+
+                    // Load commands in order
+                    _commandManager.LoadCommands(commands);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in RestoreLastCommand: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
         private ICluster CreateFallbackCluster()
         {
             IServerCapability capability = null;
@@ -233,7 +143,7 @@ namespace InfraSim.Models.Mediator
                     return;
                 }
                 
-                if (_mapper == null)
+                if (_serverDataMapper == null)
                 {
                     Console.WriteLine("ERROR: ServerDataMapper is null, cannot save clusters");
                 }
@@ -243,10 +153,10 @@ namespace InfraSim.Models.Mediator
                     Gateway = _serverFactory.CreateGatewayCluster();
                     Console.WriteLine($"Created Gateway cluster with ID {Gateway.Id}");
                     
-                    if (_mapper != null)
+                    if (_serverDataMapper != null)
                     {
                         Console.WriteLine("Saving Gateway to database");
-                        _mapper.Insert(Gateway);
+                        _serverDataMapper.Insert(Gateway);
                     }
                 }
                 catch (Exception ex)
@@ -295,10 +205,10 @@ namespace InfraSim.Models.Mediator
                     Processors = _serverFactory.CreateProcessorsCluster();
                     Console.WriteLine($"Created Processors cluster with ID {Processors.Id}");
                     
-                    if (_mapper != null)
+                    if (_serverDataMapper != null)
                     {
                         Console.WriteLine("Saving Processors to database");
-                        _mapper.Insert(Processors);
+                        _serverDataMapper.Insert(Processors);
                     }
                 }
                 catch (Exception ex)
@@ -312,10 +222,10 @@ namespace InfraSim.Models.Mediator
                     Console.WriteLine("Adding Processors to Gateway");
                     Gateway.AddServer(Processors);
                     
-                    if (_mapper != null)
+                    if (_serverDataMapper != null)
                     {
                         Console.WriteLine("Saving parent-child relationship");
-                        _mapper.AddClusterRelationship(Gateway, Processors);
+                        _serverDataMapper.AddClusterRelationship(Gateway, Processors);
                     }
                 }
                 
@@ -349,12 +259,12 @@ namespace InfraSim.Models.Mediator
             {
                 case ServerType.CDN:
                 case ServerType.LoadBalancer:
-                    var addServerCommand = new AddServerCommand(Gateway, server, _mapper);
+                    var addServerCommand = new AddServerCommand(Gateway, server, _serverDataMapper);
                     _commandManager.Execute(addServerCommand);
                     break;
                 case ServerType.Cache:
                 case ServerType.Server:
-                    addServerCommand = new AddServerCommand(Processors, server, _mapper);
+                    addServerCommand = new AddServerCommand(Processors, server, _serverDataMapper);
                     _commandManager.Execute(addServerCommand);
                     break;
             }

@@ -54,13 +54,13 @@
 </div>
 
 @code {
-    private UserCounter userCounter = new UserCounter();
-    private List<IServer> Servers = new List<IServer>();
+    private UserCounter userCounter = new UserCounter(); // UserCounter is a class that counts the number of users in the system  
+    private List<IServer> Servers = new List<IServer>(); // Servers is a list of servers in the system 
 
-    private void RefreshUI()
+    private void RefreshUI() // RefreshUI is a method that refreshes the UI 
     {
-        Servers = new List<IServer>();
-        IServerIterator iterator = InfrastructureMediator.CreateServerIterator();
+        Servers = new List<IServer>(); // Servers is a list of servers in the system 
+        IServerIterator iterator = InfrastructureMediator.CreateServerIterator(); 
         while (iterator.HasNext)
             Servers.Add(iterator.Next);
         StateHasChanged();
@@ -72,7 +72,7 @@
         RefreshUI();
     }
 
-    protected override void OnInitialized() // OnInitialized is called when the page is initialized 
+    protected override void OnInitialized() 
     {
         userCounter.OnCounterChanged += StateHasChanged;
         RefreshUI();
