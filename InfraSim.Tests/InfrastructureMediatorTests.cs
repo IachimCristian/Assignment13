@@ -18,20 +18,23 @@ namespace InfraSim.Tests
             var mockProcessors = new Mock<ICluster>();
             var mockCommandManager = new Mock<ICommandManager>();
             var mockDataMapper = new Mock<IServerDataMapper>();
+            var mockCapabilityFactory = new Mock<ICapabilityFactory>();
 
-            // Set up mock factory to return mock clusters and handle both test and production code paths
             mockFactory.Setup(f => f.CreateGatewayCluster()).Returns(mockGateway.Object);
             mockFactory.Setup(f => f.CreateProcessorsCluster()).Returns(mockProcessors.Object);
             mockFactory.Setup(f => f.CreateCluster()).Returns(mockGateway.Object);
             
             mockDataMapper.Setup(m => m.GetAll()).Returns(new List<IServer>());
 
-            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
+            var mediator = new InfrastructureMediator(
+                mockCommandManager.Object, 
+                mockDataMapper.Object, 
+                mockCapabilityFactory.Object, 
+                mockFactory.Object);
 
             Assert.NotNull(mediator.Gateway);
             Assert.NotNull(mediator.Processors);
-            
-            // Test passes regardless of which method was called to create the clusters
+
             bool gatewayCreated = 
                 mockFactory.Invocations.Any(i => i.Method.Name == "CreateGatewayCluster") ||
                 mockFactory.Invocations.Any(i => i.Method.Name == "CreateCluster");
@@ -43,7 +46,6 @@ namespace InfraSim.Tests
             Assert.True(gatewayCreated, "Gateway cluster was not created");
             Assert.True(processorsCreated, "Processors cluster was not created");
             
-            // Verify Gateway contains Processors
             mockGateway.Verify(g => g.AddServer(It.IsAny<IServer>()), Times.AtLeastOnce);
         }
 
@@ -56,8 +58,8 @@ namespace InfraSim.Tests
             var mockServer = new Mock<IServer>();
             var mockCommandManager = new Mock<ICommandManager>();
             var mockDataMapper = new Mock<IServerDataMapper>();
+            var mockCapabilityFactory = new Mock<ICapabilityFactory>();
 
-            // Set up mock factory to return mock clusters and handle both test and production code paths
             mockFactory.Setup(f => f.CreateGatewayCluster()).Returns(mockGateway.Object);
             mockFactory.Setup(f => f.CreateProcessorsCluster()).Returns(mockProcessors.Object);
             mockFactory.Setup(f => f.CreateCluster()).Returns(mockGateway.Object);
@@ -65,7 +67,11 @@ namespace InfraSim.Tests
             mockDataMapper.Setup(m => m.GetAll()).Returns(new List<IServer>());
             mockServer.Setup(s => s.ServerType).Returns(ServerType.CDN);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
+            var mediator = new InfrastructureMediator(
+                mockCommandManager.Object, 
+                mockDataMapper.Object, 
+                mockCapabilityFactory.Object, 
+                mockFactory.Object);
             mediator.AddServer(mockServer.Object);
 
             mockCommandManager.Verify(cm => cm.Execute(It.IsAny<AddServerCommand>()), Times.Once);
@@ -81,8 +87,8 @@ namespace InfraSim.Tests
             var mockServer = new Mock<IServer>();
             var mockCommandManager = new Mock<ICommandManager>();
             var mockDataMapper = new Mock<IServerDataMapper>();
+            var mockCapabilityFactory = new Mock<ICapabilityFactory>();
 
-            // Set up mock factory to return mock clusters and handle both test and production code paths
             mockFactory.Setup(f => f.CreateGatewayCluster()).Returns(mockGateway.Object);
             mockFactory.Setup(f => f.CreateProcessorsCluster()).Returns(mockProcessors.Object);
             mockFactory.Setup(f => f.CreateCluster()).Returns(mockGateway.Object);
@@ -90,7 +96,11 @@ namespace InfraSim.Tests
             mockDataMapper.Setup(m => m.GetAll()).Returns(new List<IServer>());
             mockServer.Setup(s => s.ServerType).Returns(ServerType.LoadBalancer);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
+            var mediator = new InfrastructureMediator(
+                mockCommandManager.Object, 
+                mockDataMapper.Object, 
+                mockCapabilityFactory.Object, 
+                mockFactory.Object);
             mediator.AddServer(mockServer.Object);
 
             mockCommandManager.Verify(cm => cm.Execute(It.IsAny<AddServerCommand>()), Times.Once);
@@ -106,8 +116,8 @@ namespace InfraSim.Tests
             var mockServer = new Mock<IServer>();
             var mockCommandManager = new Mock<ICommandManager>();
             var mockDataMapper = new Mock<IServerDataMapper>();
+            var mockCapabilityFactory = new Mock<ICapabilityFactory>();
 
-            // Set up mock factory to return mock clusters and handle both test and production code paths
             mockFactory.Setup(f => f.CreateGatewayCluster()).Returns(mockGateway.Object);
             mockFactory.Setup(f => f.CreateProcessorsCluster()).Returns(mockProcessors.Object);
             mockFactory.Setup(f => f.CreateCluster()).Returns(mockGateway.Object);
@@ -115,7 +125,11 @@ namespace InfraSim.Tests
             mockDataMapper.Setup(m => m.GetAll()).Returns(new List<IServer>());
             mockServer.Setup(s => s.ServerType).Returns(ServerType.Cache);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
+            var mediator = new InfrastructureMediator(
+                mockCommandManager.Object, 
+                mockDataMapper.Object, 
+                mockCapabilityFactory.Object, 
+                mockFactory.Object);
             mediator.AddServer(mockServer.Object);
 
             mockCommandManager.Verify(cm => cm.Execute(It.IsAny<AddServerCommand>()), Times.Once);
@@ -131,8 +145,8 @@ namespace InfraSim.Tests
             var mockServer = new Mock<IServer>();
             var mockCommandManager = new Mock<ICommandManager>();
             var mockDataMapper = new Mock<IServerDataMapper>();
+            var mockCapabilityFactory = new Mock<ICapabilityFactory>();
 
-            // Set up mock factory to return mock clusters and handle both test and production code paths
             mockFactory.Setup(f => f.CreateGatewayCluster()).Returns(mockGateway.Object);
             mockFactory.Setup(f => f.CreateProcessorsCluster()).Returns(mockProcessors.Object);
             mockFactory.Setup(f => f.CreateCluster()).Returns(mockGateway.Object);
@@ -140,7 +154,11 @@ namespace InfraSim.Tests
             mockDataMapper.Setup(m => m.GetAll()).Returns(new List<IServer>());
             mockServer.Setup(s => s.ServerType).Returns(ServerType.Server);
 
-            var mediator = new InfrastructureMediator(mockFactory.Object, mockCommandManager.Object, mockDataMapper.Object);
+            var mediator = new InfrastructureMediator(
+                mockCommandManager.Object, 
+                mockDataMapper.Object, 
+                mockCapabilityFactory.Object, 
+                mockFactory.Object);
             mediator.AddServer(mockServer.Object);
 
             mockCommandManager.Verify(cm => cm.Execute(It.IsAny<AddServerCommand>()), Times.Once);
