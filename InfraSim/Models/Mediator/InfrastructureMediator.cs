@@ -7,7 +7,7 @@ using InfraSim.Models.Db;
 
 namespace InfraSim.Models.Mediator
 {
-    public class InfrastructureMediator : IInfrastructureMediator 
+    public class InfrastructureMediator : IInfrastructureMediator, IObserver
     {
         public ICluster Gateway { get; private set; }
         public ICluster Processors { get; private set; }
@@ -283,6 +283,11 @@ namespace InfraSim.Models.Mediator
         public IServerIterator CreateServerIterator()
         {
             return new ServerIterator(Gateway);
+        }
+
+        public void Update(int users)
+        {
+            // Empty for now
         }
     }
 } 

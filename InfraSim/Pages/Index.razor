@@ -74,6 +74,8 @@
 
     protected override void OnInitialized() 
     {
+        userCounter.RegisterObserver((IObserver)InfrastructureMediator);
+        
         userCounter.OnCounterChanged += () => {
             if (!InfrastructureMediator.IsOK)
             {
