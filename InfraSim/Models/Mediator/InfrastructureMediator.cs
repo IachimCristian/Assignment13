@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using InfraSim.Models.Capability;
 using InfraSim.Models.Db;
+using InfraSim.Routing;
 
 namespace InfraSim.Models.Mediator
 {
@@ -287,7 +288,23 @@ namespace InfraSim.Models.Mediator
 
         public void Update(int users)
         {
-            // Empty for now
+            long requestCount = users * 4;
+            ITrafficDelivery chain = GetDeliveryChain();
+            chain.DeliverRequests(requestCount);
+        }
+
+        public ITrafficDelivery GetDeliveryChain()
+        {
+            ITrafficDelivery CDNDeliveryChain = new CDNTrafficRouting(Gateway.Servers);
+            ITrafficDelivery LBDeliveryChain = new FullTrafficRouting(Gateway.Servers, ServerType.LoadBalancer);
+            ITrafficDelivery CacheDeliveryChain = new CacheTrafficRouting(Processors.Servers);
+            ITrafficDelivery ServerDeliveryChain = new FullTrafficRouting(Processors.Servers, ServerType.Server);
+            
+            CDNDeliveryChain.SetNext(LBDeliveryChain);
+            LBDeliveryChain.SetNext(CacheDeliveryChain);
+            CacheDeliveryChain.SetNext(ServerDeliveryChain);
+            
+            return CDNDeliveryChain;
         }
     }
 } 

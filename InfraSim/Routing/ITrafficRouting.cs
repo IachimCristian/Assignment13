@@ -2,6 +2,7 @@ namespace InfraSim.Routing
 {
     public interface ITrafficRouting
     {
-        void RouteTraffic(int requestCount);
+        void RouteTraffic(long requestCount);
+        long CalculateRequests(long requestCount);
     }
 } 

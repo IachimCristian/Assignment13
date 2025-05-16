@@ -7,9 +7,23 @@ namespace InfraSim.Routing
 {
     public class CDNTrafficRouting : TrafficRouting
     {
-        public override int CalculateRequests(int requestCount)
+        private readonly IEnumerable<IServer> _servers;
+
+        public CDNTrafficRouting(IEnumerable<IServer> servers)
         {
-            return (int)(requestCount * 0.7);
+            _servers = servers;
+            Servers = servers.ToList();
+        }
+
+        public override void RouteTraffic(long requestCount)
+        {
+            List<IServer> servers = ObtainServers();
+            SendRequestsToServers(CalculateRequests(requestCount), servers);
+        }
+
+        public override long CalculateRequests(long requestCount)
+        {
+            return (long)(requestCount * 0.7);
         }
 
         public override List<IServer> ObtainServers()

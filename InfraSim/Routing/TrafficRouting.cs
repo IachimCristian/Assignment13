@@ -4,7 +4,7 @@ using InfraSim.Models.Server;
 
 namespace InfraSim.Routing
 {
-    public abstract class TrafficRouting : ITrafficRouting
+    public abstract class TrafficRouting : TrafficDelivery, ITrafficRouting
     {
         public List<IServer> Servers { get; set; }
 
@@ -13,25 +13,34 @@ namespace InfraSim.Routing
             Servers = new List<IServer>();
         }
 
-        public void RouteTraffic(int requestCount)
-        {
-            int requests = CalculateRequests(requestCount);
-            List<IServer> servers = ObtainServers();
-            SendRequestsToServers(requests, servers);
-        }
-
-        public abstract int CalculateRequests(int requestCount);
+        public abstract void RouteTraffic(long requestCount);
+        
+        public abstract long CalculateRequests(long requestCount);
 
         public abstract List<IServer> ObtainServers();
 
-        public void SendRequestsToServers(int requestCount, List<IServer> servers)
+        public void SendRequestsToServers(long requestCount, List<IServer> servers)
         {
             if (servers.Count == 0) return;
             
-            int requestsPerServer = requestCount / servers.Count;
+            long requestsPerServer = requestCount / servers.Count;
             foreach (var server in servers)
             {
-                server.HandleRequests(requestsPerServer);
+                server.HandleRequests((int)requestsPerServer);
+            }
+        }
+        
+        public override void DeliverRequests(long requestCount)
+        {
+            RouteTraffic(requestCount);
+            long remainingRequests = requestCount - CalculateRequests(requestCount);
+            if (remainingRequests > 0)
+            {
+                NextHandler?.DeliverRequests(remainingRequests);
+            }
+            else
+            {
+                NextHandler?.DeliverRequests(requestCount);
             }
         }
     }

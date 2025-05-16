@@ -7,14 +7,23 @@ namespace InfraSim.Routing
 {
     public class FullTrafficRouting : TrafficRouting
     {
+        private readonly IEnumerable<IServer> _servers;
         private readonly ServerType _serverType;
 
-        public FullTrafficRouting(ServerType serverType)
+        public FullTrafficRouting(IEnumerable<IServer> servers, ServerType serverType)
         {
+            _servers = servers;
             _serverType = serverType;
+            Servers = servers.ToList();
         }
 
-        public override int CalculateRequests(int requestCount)
+        public override void RouteTraffic(long requestCount)
+        {
+            List<IServer> servers = ObtainServers();
+            SendRequestsToServers(CalculateRequests(requestCount), servers);
+        }
+
+        public override long CalculateRequests(long requestCount)
         {
             return requestCount;
         }
