@@ -7,7 +7,7 @@ namespace InfraSim.Models.Server
     public class ServerBuilder : IServerBuilder
     {
         private Guid _id;
-        private ServerType _type;
+        private ServerType _type = ServerType.Server;
         private IServerCapability _capability;
         private IServerState _state = new IdleState();
         private IValidatorStrategy _validator = new ServerValidator();

@@ -10,28 +10,28 @@ namespace InfraSim.Tests
     public class CDNTrafficRoutingTests
     {
         [Fact]
-        public void CalculateRequests_Returns70Percent()
+        public void CalculateRequests_Returns70Percent() // Test if the CalculateRequests method returns 70% of the requests 
         {
-            var trafficRouting = new CDNTrafficRouting();
-            int requestCount = 100;
+            var servers = new List<IServer>();
+            var trafficRouting = new CDNTrafficRouting(servers);
+            long requestCount = 100;
             
-            int result = trafficRouting.CalculateRequests(requestCount);
+            long result = trafficRouting.CalculateRequests(requestCount);
             
             Assert.Equal(70, result);
         }
 
         [Fact]
-        public void ObtainServers_ReturnsCDNServers()
+        public void ObtainServers_ReturnsCDNServers() // Test if the ObtainServers method returns CDN servers 
         {
-            var trafficRouting = new CDNTrafficRouting();
             var mockCDN = new Mock<IServer>();
             var mockOther = new Mock<IServer>();
             
             mockCDN.Setup(s => s.ServerType).Returns(ServerType.CDN);
             mockOther.Setup(s => s.ServerType).Returns(ServerType.Server);
             
-            trafficRouting.Servers.Add(mockCDN.Object);
-            trafficRouting.Servers.Add(mockOther.Object);
+            var servers = new List<IServer> { mockCDN.Object, mockOther.Object };
+            var trafficRouting = new CDNTrafficRouting(servers);
             
             var result = trafficRouting.ObtainServers();
             
@@ -41,9 +41,8 @@ namespace InfraSim.Tests
         }
 
         [Fact]
-        public void SendRequestsToServers_DistributesRequestsEvenly()
+        public void SendRequestsToServers_DistributesRequestsEvenly() // Test if the SendRequestsToServers method distributes the requests evenly 
         {
-            var trafficRouting = new CDNTrafficRouting();
             var mockServer1 = new Mock<IServer>();
             var mockServer2 = new Mock<IServer>();
             
@@ -51,6 +50,7 @@ namespace InfraSim.Tests
             mockServer2.Setup(s => s.ServerType).Returns(ServerType.CDN);
             
             var servers = new List<IServer> { mockServer1.Object, mockServer2.Object };
+            var trafficRouting = new CDNTrafficRouting(servers);
             
             trafficRouting.SendRequestsToServers(100, servers);
             
@@ -59,12 +59,12 @@ namespace InfraSim.Tests
         }
 
         [Fact]
-        public void RouteTraffic_ProcessesRequests()
+        public void RouteTraffic_ProcessesRequests() // Test if the RouteTraffic method processes the requests 
         {
-            var trafficRouting = new CDNTrafficRouting();
             var mockServer = new Mock<IServer>();
             mockServer.Setup(s => s.ServerType).Returns(ServerType.CDN);
-            trafficRouting.Servers.Add(mockServer.Object);
+            var servers = new List<IServer> { mockServer.Object };
+            var trafficRouting = new CDNTrafficRouting(servers);
             
             trafficRouting.RouteTraffic(100);
             

@@ -12,10 +12,11 @@ namespace InfraSim.Tests
         [Fact]
         public void CalculateRequests_ReturnsInputValue() // Test if the CalculateRequests method returns the input value
         {
-            var trafficRouting = new FullTrafficRouting(ServerType.Server); // Create a new FullTrafficRouting object 
-            int requestCount = 100; // Set the request count to 100 
+            var servers = new List<IServer>(); // Create a list of servers 
+            var trafficRouting = new FullTrafficRouting(servers, ServerType.Server); // Create a new FullTrafficRouting 
+            long requestCount = 100; 
             
-            int result = trafficRouting.CalculateRequests(requestCount); // Call the CalculateRequests method with the request count and store the result in the result variable 
+            long result = trafficRouting.CalculateRequests(requestCount); 
             
             Assert.Equal(requestCount, result); // Assert that the result is equal to the request count 
         }
@@ -23,22 +24,22 @@ namespace InfraSim.Tests
         [Fact]
         public void TestRequestCount_ShouldReturnCorrectRequestCount() // Test if the CalculateRequests method return the correct request count
         {
-            var trafficRouting = new FullTrafficRouting(ServerType.Server); // Create a new FullTrafficRouting object
-            Assert.Equal(100, trafficRouting.CalculateRequests(100)); // Assert that the CalculateRequests method returns the correct request 
+            var servers = new List<IServer>();
+            var trafficRouting = new FullTrafficRouting(servers, ServerType.Server); // Update constructor
+            Assert.Equal(100L, trafficRouting.CalculateRequests(100)); // Added L suffix for long literal
         }
 
         [Fact]
         public void ObtainServers_ReturnsAllServers() // Test if the ObtainServers method returns all servers
         {
-            var trafficRouting = new FullTrafficRouting(ServerType.Server); // Create a new FullTrafficRouting object
-            var mockServer1 = new Mock<IServer>(); // Create a mock server object 
+            var mockServer1 = new Mock<IServer>();
             var mockServer2 = new Mock<IServer>();
             
             mockServer1.Setup(s => s.ServerType).Returns(ServerType.Server);
             mockServer2.Setup(s => s.ServerType).Returns(ServerType.Server);
             
-            trafficRouting.Servers.Add(mockServer1.Object);
-            trafficRouting.Servers.Add(mockServer2.Object);
+            var servers = new List<IServer> { mockServer1.Object, mockServer2.Object };
+            var trafficRouting = new FullTrafficRouting(servers, ServerType.Server); // Update constructor
             
             var result = trafficRouting.ObtainServers();
             
@@ -50,7 +51,6 @@ namespace InfraSim.Tests
         [Fact]
         public void SendRequestsToServers_DistributesRequestsEvenly() // Test if the SendRequestsToServers method distributes the requests evenly
         {
-            var trafficRouting = new FullTrafficRouting(ServerType.Server);
             var mockServer1 = new Mock<IServer>();
             var mockServer2 = new Mock<IServer>();
             var mockServer3 = new Mock<IServer>();
@@ -66,6 +66,8 @@ namespace InfraSim.Tests
                 mockServer3.Object 
             };
             
+            var trafficRouting = new FullTrafficRouting(servers, ServerType.Server); // Update constructor
+            
             trafficRouting.SendRequestsToServers(100, servers);
             
             mockServer1.Verify(s => s.HandleRequests(33), Times.Once);
@@ -76,8 +78,8 @@ namespace InfraSim.Tests
         [Fact]
         public void SendRequestsToServers_HandlesEmptyServerList()
         {
-            var trafficRouting = new FullTrafficRouting(ServerType.Server);
             var servers = new List<IServer>();
+            var trafficRouting = new FullTrafficRouting(servers, ServerType.Server); // Update constructor
             
             trafficRouting.SendRequestsToServers(100, servers);
         }
@@ -89,8 +91,7 @@ namespace InfraSim.Tests
             mockServer.Setup(s => s.ServerType).Returns(ServerType.Server);
             var servers = new List<IServer> { mockServer.Object };
             
-            var trafficRouting = new FullTrafficRouting(ServerType.Server);
-            trafficRouting.Servers = servers;
+            var trafficRouting = new FullTrafficRouting(servers, ServerType.Server); // Update constructor
             
             trafficRouting.RouteTraffic(100);
             

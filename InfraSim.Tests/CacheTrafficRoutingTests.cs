@@ -12,10 +12,11 @@ namespace InfraSim.Tests
         [Fact]
         public void CalculateRequests_Returns80Percent()
         {
-            var trafficRouting = new CacheTrafficRouting();
-            int requestCount = 100;
+            var servers = new List<IServer>();
+            var trafficRouting = new CacheTrafficRouting(servers);
+            long requestCount = 100;
             
-            int result = trafficRouting.CalculateRequests(requestCount);
+            long result = trafficRouting.CalculateRequests(requestCount);
             
             Assert.Equal(80, result);
         }
@@ -23,15 +24,14 @@ namespace InfraSim.Tests
         [Fact]
         public void ObtainServers_ReturnsCacheServers()
         {
-            var trafficRouting = new CacheTrafficRouting();
             var mockCache = new Mock<IServer>();
             var mockOther = new Mock<IServer>();
             
             mockCache.Setup(s => s.ServerType).Returns(ServerType.Cache);
             mockOther.Setup(s => s.ServerType).Returns(ServerType.Server);
             
-            trafficRouting.Servers.Add(mockCache.Object);
-            trafficRouting.Servers.Add(mockOther.Object);
+            var servers = new List<IServer> { mockCache.Object, mockOther.Object };
+            var trafficRouting = new CacheTrafficRouting(servers);
             
             var result = trafficRouting.ObtainServers();
             
@@ -43,7 +43,6 @@ namespace InfraSim.Tests
         [Fact]
         public void SendRequestsToServers_DistributesRequestsEvenly()
         {
-            var trafficRouting = new CacheTrafficRouting();
             var mockServer1 = new Mock<IServer>();
             var mockServer2 = new Mock<IServer>();
             
@@ -51,6 +50,7 @@ namespace InfraSim.Tests
             mockServer2.Setup(s => s.ServerType).Returns(ServerType.Cache);
             
             var servers = new List<IServer> { mockServer1.Object, mockServer2.Object };
+            var trafficRouting = new CacheTrafficRouting(servers);
             
             trafficRouting.SendRequestsToServers(100, servers);
             
@@ -61,10 +61,10 @@ namespace InfraSim.Tests
         [Fact]
         public void RouteTraffic_ProcessesRequests()
         {
-            var trafficRouting = new CacheTrafficRouting();
             var mockServer = new Mock<IServer>();
             mockServer.Setup(s => s.ServerType).Returns(ServerType.Cache);
-            trafficRouting.Servers.Add(mockServer.Object);
+            var servers = new List<IServer> { mockServer.Object };
+            var trafficRouting = new CacheTrafficRouting(servers);
             
             trafficRouting.RouteTraffic(100);
             
