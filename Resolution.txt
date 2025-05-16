@@ -1,0 +1,2 @@
+Maximum user count reached: 200,000
+Final total cost: € 65,000
