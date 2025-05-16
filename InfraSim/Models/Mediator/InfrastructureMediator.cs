@@ -27,6 +27,18 @@ namespace InfraSim.Models.Mediator
                 return costCalculator.TotalCost;
             }
         }
+        
+        public bool IsOK
+        {
+            get
+            {
+                IServerIterator serverIterator = CreateServerIterator();
+                var statusCalculator = new StatusCalculator();
+                while (serverIterator.HasNext)
+                    serverIterator.Next.Accept(statusCalculator);
+                return statusCalculator.IsOK;
+            }
+        }
 
         public InfrastructureMediator(
             ICommandManager commandManager,
@@ -59,7 +71,6 @@ namespace InfraSim.Models.Mediator
                         switch (db.ServerType)
                         {
                             case ServerType.Cluster:
-                                // Skip clusters as they're created in CreateNewClusters
                                 continue;
                             case ServerType.CDN:
                                 server = _serverFactory.CreateCDN();
@@ -79,7 +90,6 @@ namespace InfraSim.Models.Mediator
                         
                         server.Id = db.Id;
 
-                        // Add to proper parent cluster based on server type
                         ICluster parent;
                         if (db.ServerType == ServerType.CDN || db.ServerType == ServerType.LoadBalancer)
                         {
@@ -90,12 +100,10 @@ namespace InfraSim.Models.Mediator
                             parent = Processors;
                         }
                         
-                        // Create command
                         var command = new AddServerCommand(parent, server, _serverDataMapper);
                         commands.Add(command);
                     }
 
-                    // Load commands in order
                     _commandManager.LoadCommands(commands);
                 }
             }
