@@ -24,6 +24,8 @@ namespace InfraSim.Tests
             mockFactory.Setup(f => f.CreateProcessorsCluster()).Returns(mockProcessors.Object);
             mockFactory.Setup(f => f.CreateCluster()).Returns(mockGateway.Object);
             
+            mockGateway.Setup(g => g.Servers).Returns(new List<IServer>());
+            
             mockDataMapper.Setup(m => m.GetAll()).Returns(new List<IServer>());
 
             var mediator = new InfrastructureMediator(
@@ -46,7 +48,7 @@ namespace InfraSim.Tests
             Assert.True(gatewayCreated, "Gateway cluster was not created");
             Assert.True(processorsCreated, "Processors cluster was not created");
             
-            mockGateway.Verify(g => g.AddServer(It.IsAny<IServer>()), Times.AtLeastOnce);
+            mockGateway.Verify(g => g.AddServer(mockProcessors.Object), Times.AtLeastOnce);
         }
 
         [Fact]

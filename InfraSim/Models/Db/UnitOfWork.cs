@@ -82,7 +82,6 @@ namespace InfraSim.Models.Db
             {
                 Console.WriteLine("UnitOfWork: About to save changes to database");
                 
-                // Ensure change tracking is working properly
                 _context.ChangeTracker.DetectChanges();
                 
                 var pendingChanges = _context.ChangeTracker.Entries()
@@ -106,7 +105,6 @@ namespace InfraSim.Models.Db
                         Console.WriteLine($"WARNING: Expected to save {pendingChanges.Count} changes but only {changes} were saved!");
                     }
                     
-                    // Verify changes were actually saved
                     foreach (var entry in pendingChanges)
                     {
                         if (entry.Entity is DbItem item)
@@ -131,7 +129,6 @@ namespace InfraSim.Models.Db
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                // Handle concurrency conflicts
                 System.Diagnostics.Debug.WriteLine($"Concurrency conflict detected: {ex.Message}");
                 Console.WriteLine($"UnitOfWork ERROR: Concurrency conflict: {ex.Message}");
                 foreach (var entry in ex.Entries)
@@ -146,7 +143,6 @@ namespace InfraSim.Models.Db
                     }
                 }
                 
-                // Try saving again
                 _context.ChangeTracker.DetectChanges();
                 int changes = _context.SaveChanges();
                 Console.WriteLine($"UnitOfWork: SaveChanges retry completed - {changes} entities affected");
