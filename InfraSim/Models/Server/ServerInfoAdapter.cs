@@ -15,6 +15,7 @@ namespace InfraSim.Models.Server
             ServerType.Cache => "Cache",
             ServerType.LoadBalancer => "Load Balancer",
             ServerType.CDN => "CDN",
+            ServerType.Database => "Database",
             _ => throw new System.NotImplementedException()
         };
 

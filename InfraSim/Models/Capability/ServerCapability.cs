@@ -26,6 +26,10 @@ namespace InfraSim.Models.Capability
                     capability = new TrafficDistributionDecorator(capability);
                     capability = new EdgeServerDecorator(capability);
                     break;
+                    
+                case ServerType.Database:
+                    capability = new PersistentStorageDecorator(capability);
+                    break;
             }
 
             return capability;

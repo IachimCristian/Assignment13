@@ -151,5 +151,54 @@ namespace InfraSim.Models.Server
                 return CreateCluster();
             }
         }
+
+        public IServer CreateDatabase()
+        {
+            return CreateServerWithType(ServerType.Database);
+        }
+        
+        public ICluster CreateDataCluster()
+        {
+            try
+            {
+                var capability = _capabilityFactory.Create(ServerType.Cluster);
+                var cluster = new Cluster(capability, new DataValidator());
+                cluster.Id = Guid.NewGuid();
+                
+                Console.WriteLine($"=== ServerFactory: Creating data cluster with ID {cluster.Id} ===");
+                
+                var serversFromDb = _dataMapper.GetAll();
+                
+                if (serversFromDb != null && serversFromDb.Any())
+                {
+                    Console.WriteLine($"ServerFactory: Found {serversFromDb.Count} servers in database");
+                    
+                    var databaseServers = serversFromDb.Where(s => 
+                        s.ServerType == ServerType.Database).ToList();
+                    
+                    Console.WriteLine($"ServerFactory: Adding {databaseServers.Count} database servers to cluster");
+                    foreach (var server in databaseServers)
+                    {
+                        if (server.ServerType != ServerType.Cluster && !cluster.Servers.Contains(server))
+                        {
+                            cluster.AddServer(server);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("ServerFactory: No existing servers found for data cluster");
+                }
+                
+                return cluster;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in CreateDataCluster: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                return CreateCluster();
+            }
+        }
     }
 } 

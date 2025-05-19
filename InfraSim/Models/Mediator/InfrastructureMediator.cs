@@ -12,6 +12,7 @@ namespace InfraSim.Models.Mediator
     {
         public ICluster Gateway { get; private set; }
         public ICluster Processors { get; private set; }
+        public ICluster Data { get; private set; }
         private readonly ICommandManager _commandManager;
         private readonly IServerDataMapper _serverDataMapper;
         private readonly IServerFactory _serverFactory;
@@ -38,13 +39,14 @@ namespace InfraSim.Models.Mediator
                     if (Gateway == null)
                         return false;
                         
-                    IServerIterator serverIterator = CreateServerIterator(); // Create a new iterator for each check 
+                    IServerIterator serverIterator = CreateServerIterator();
                     
                     if (serverIterator == null)
                         return false;
                         
                     var statusCalculator = new StatusCalculator();
                     
+                    // Check all servers in Gateway and Processors
                     while (serverIterator.HasNext)
                     {
                         var server = serverIterator.Next;
@@ -52,6 +54,12 @@ namespace InfraSim.Models.Mediator
                         {
                             server.Accept(statusCalculator);
                         }
+                    }
+                    
+                    // Also check Data cluster
+                    if (Data != null)
+                    {
+                        Data.Accept(statusCalculator);
                     }
                     
                     return statusCalculator.IsOK;
@@ -179,6 +187,7 @@ namespace InfraSim.Models.Mediator
                     Console.WriteLine("ERROR: ServerFactory is null, cannot create clusters");
                     Gateway = CreateFallbackCluster();
                     Processors = CreateFallbackCluster();
+                    Data = CreateFallbackCluster();
                     return;
                 }
                 
@@ -187,6 +196,7 @@ namespace InfraSim.Models.Mediator
                     Console.WriteLine("ERROR: ServerDataMapper is null, cannot save clusters");
                 }
                 
+                // Create Gateway cluster
                 try
                 {
                     Gateway = _serverFactory.CreateGatewayCluster();
@@ -204,6 +214,7 @@ namespace InfraSim.Models.Mediator
                     Gateway = CreateFallbackCluster();
                 }
                 
+                // Create Processors cluster
                 try
                 {
                     Processors = _serverFactory.CreateProcessorsCluster();
@@ -215,6 +226,7 @@ namespace InfraSim.Models.Mediator
                         _serverDataMapper.Insert(Processors);
                     }
                     
+                    // Ensure Processors are added to Gateway for composite pattern
                     if (Gateway != null && Processors != null)
                     {
                         Console.WriteLine("Adding Processors to Gateway");
@@ -242,6 +254,7 @@ namespace InfraSim.Models.Mediator
                     Console.WriteLine($"ERROR creating Processors cluster: {ex.Message}");
                     Processors = CreateFallbackCluster();
                     
+                    // Ensure Processors are added to Gateway even in fallback scenario
                     if (Gateway != null && Processors != null && Gateway.Servers != null)
                     {
                         if (!Gateway.Servers.Contains(Processors))
@@ -252,7 +265,64 @@ namespace InfraSim.Models.Mediator
                             }
                             catch (Exception innerEx)
                             {
-                                Console.WriteLine($"Error adding Processors to Gateway in fallback: {innerEx.Message}");
+                                Console.WriteLine($"Error adding Processors to Gateway: {innerEx.Message}");
+                            }
+                        }
+                    }
+                }
+                
+                // Create Data cluster
+                try
+                {
+                    Data = _serverFactory.CreateDataCluster();
+                    Console.WriteLine($"Created Data cluster with ID {Data.Id}");
+                    
+                    if (_serverDataMapper != null)
+                    {
+                        Console.WriteLine("Saving Data cluster to database");
+                        _serverDataMapper.Insert(Data);
+                    }
+                    
+                    // Add Data cluster to Gateway for composite pattern
+                    if (Gateway != null && Data != null)
+                    {
+                        Console.WriteLine("Adding Data cluster to Gateway");
+                        if (!Gateway.Servers.Contains(Data))
+                        {
+                            Gateway.AddServer(Data);
+                        }
+                        
+                        if (_serverDataMapper != null)
+                        {
+                            try
+                            {
+                                Console.WriteLine("Saving Data-Gateway parent-child relationship");
+                                _serverDataMapper.AddClusterRelationship(Gateway, Data);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error saving Data-Gateway relationship: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ERROR creating Data cluster: {ex.Message}");
+                    Data = CreateFallbackCluster();
+                    
+                    // Add Data cluster to Gateway in fallback scenario
+                    if (Gateway != null && Data != null && Gateway.Servers != null)
+                    {
+                        if (!Gateway.Servers.Contains(Data))
+                        {
+                            try
+                            {
+                                Gateway.AddServer(Data);
+                            }
+                            catch (Exception innerEx)
+                            {
+                                Console.WriteLine($"Error adding Data to Gateway: {innerEx.Message}");
                             }
                         }
                     }
@@ -289,6 +359,26 @@ namespace InfraSim.Models.Mediator
                         }
                     }
                 }
+                
+                if (Data == null)
+                {
+                    Data = CreateFallbackCluster();
+                    
+                    if (Gateway != null && Data != null && Gateway.Servers != null)
+                    {
+                        if (!Gateway.Servers.Contains(Data))
+                        {
+                            try 
+                            {
+                                Gateway.AddServer(Data);
+                            }
+                            catch (Exception innerEx)
+                            {
+                                Console.WriteLine($"Error adding Data to Gateway in fallback: {innerEx.Message}");
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -309,6 +399,10 @@ namespace InfraSim.Models.Mediator
                 case ServerType.Cache:
                 case ServerType.Server:
                     addServerCommand = new AddServerCommand(Processors, server, _serverDataMapper);
+                    _commandManager.Execute(addServerCommand);
+                    break;
+                case ServerType.Database:
+                    addServerCommand = new AddServerCommand(Data, server, _serverDataMapper);
                     _commandManager.Execute(addServerCommand);
                     break;
             }
@@ -340,10 +434,12 @@ namespace InfraSim.Models.Mediator
             ITrafficDelivery LBDeliveryChain = new FullTrafficRouting(Gateway.Servers, ServerType.LoadBalancer);
             ITrafficDelivery CacheDeliveryChain = new CacheTrafficRouting(Processors.Servers);
             ITrafficDelivery ServerDeliveryChain = new FullTrafficRouting(Processors.Servers, ServerType.Server);
+            ITrafficDelivery DatabaseDeliveryChain = new DatabaseTrafficRouting(Data.Servers);
             
             CDNDeliveryChain.SetNext(LBDeliveryChain);
             LBDeliveryChain.SetNext(CacheDeliveryChain);
             CacheDeliveryChain.SetNext(ServerDeliveryChain);
+            ServerDeliveryChain.SetNext(DatabaseDeliveryChain);
             
             return CDNDeliveryChain;
         }
