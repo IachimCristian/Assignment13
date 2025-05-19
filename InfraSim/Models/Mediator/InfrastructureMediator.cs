@@ -39,14 +39,13 @@ namespace InfraSim.Models.Mediator
                     if (Gateway == null)
                         return false;
                         
-                    IServerIterator serverIterator = CreateServerIterator();
+                    IServerIterator serverIterator = CreateServerIterator(); // Create a new iterator for each check 
                     
                     if (serverIterator == null)
                         return false;
                         
                     var statusCalculator = new StatusCalculator();
                     
-                    // Check all servers in Gateway and Processors
                     while (serverIterator.HasNext)
                     {
                         var server = serverIterator.Next;
@@ -56,10 +55,9 @@ namespace InfraSim.Models.Mediator
                         }
                     }
                     
-                    // Also check Data cluster
-                    if (Data != null)
+                    if (Data != null) // Check if the Data cluster exists 
                     {
-                        Data.Accept(statusCalculator);
+                        Data.Accept(statusCalculator); // Accept the status calculator 
                     }
                     
                     return statusCalculator.IsOK;
@@ -187,7 +185,7 @@ namespace InfraSim.Models.Mediator
                     Console.WriteLine("ERROR: ServerFactory is null, cannot create clusters");
                     Gateway = CreateFallbackCluster();
                     Processors = CreateFallbackCluster();
-                    Data = CreateFallbackCluster();
+                    Data = CreateFallbackCluster(); // Create a fallback cluster if the server factory is null 
                     return;
                 }
                 
@@ -196,7 +194,6 @@ namespace InfraSim.Models.Mediator
                     Console.WriteLine("ERROR: ServerDataMapper is null, cannot save clusters");
                 }
                 
-                // Create Gateway cluster
                 try
                 {
                     Gateway = _serverFactory.CreateGatewayCluster();
@@ -214,7 +211,6 @@ namespace InfraSim.Models.Mediator
                     Gateway = CreateFallbackCluster();
                 }
                 
-                // Create Processors cluster
                 try
                 {
                     Processors = _serverFactory.CreateProcessorsCluster();
@@ -226,7 +222,6 @@ namespace InfraSim.Models.Mediator
                         _serverDataMapper.Insert(Processors);
                     }
                     
-                    // Ensure Processors are added to Gateway for composite pattern
                     if (Gateway != null && Processors != null)
                     {
                         Console.WriteLine("Adding Processors to Gateway");
@@ -254,7 +249,6 @@ namespace InfraSim.Models.Mediator
                     Console.WriteLine($"ERROR creating Processors cluster: {ex.Message}");
                     Processors = CreateFallbackCluster();
                     
-                    // Ensure Processors are added to Gateway even in fallback scenario
                     if (Gateway != null && Processors != null && Gateway.Servers != null)
                     {
                         if (!Gateway.Servers.Contains(Processors))
@@ -271,7 +265,6 @@ namespace InfraSim.Models.Mediator
                     }
                 }
                 
-                // Create Data cluster
                 try
                 {
                     Data = _serverFactory.CreateDataCluster();
@@ -283,7 +276,6 @@ namespace InfraSim.Models.Mediator
                         _serverDataMapper.Insert(Data);
                     }
                     
-                    // Add Data cluster to Gateway for composite pattern
                     if (Gateway != null && Data != null)
                     {
                         Console.WriteLine("Adding Data cluster to Gateway");
@@ -311,7 +303,6 @@ namespace InfraSim.Models.Mediator
                     Console.WriteLine($"ERROR creating Data cluster: {ex.Message}");
                     Data = CreateFallbackCluster();
                     
-                    // Add Data cluster to Gateway in fallback scenario
                     if (Gateway != null && Data != null && Gateway.Servers != null)
                     {
                         if (!Gateway.Servers.Contains(Data))
