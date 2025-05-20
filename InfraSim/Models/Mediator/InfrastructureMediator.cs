@@ -427,7 +427,7 @@ namespace InfraSim.Models.Mediator
         public void Update(int users)
         {
             long requestCount = users * 4;
-            ITrafficDelivery chain = GetDeliveryChain();
+            ITrafficDelivery chain = GetDeliveryChain(); 
             chain.DeliverRequests(requestCount);
         }
 
