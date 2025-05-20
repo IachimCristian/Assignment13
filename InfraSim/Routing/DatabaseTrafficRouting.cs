@@ -26,10 +26,23 @@ namespace InfraSim.Routing
                     long calculatedRequests = CalculateRequests(requestCount);
                     SendRequestsToServers(calculatedRequests, servers);
                 }
+                
+                PassToNext(requestCount);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error routing traffic to Database servers: {ex.Message}");
+                
+                try
+                {
+                    if (NextHandler != null)
+                    {
+                        NextHandler.DeliverRequests(requestCount);
+                    }
+                }
+                catch
+                {
+                }
             }
         }
 

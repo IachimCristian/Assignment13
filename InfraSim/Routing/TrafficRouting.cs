@@ -21,26 +21,69 @@ namespace InfraSim.Routing
 
         public void SendRequestsToServers(long requestCount, List<IServer> servers)
         {
-            if (servers.Count == 0) return;
-            
-            long requestsPerServer = requestCount / servers.Count;
-            foreach (var server in servers)
+            try
             {
-                server.HandleRequests((int)requestsPerServer);
+                if (servers == null || servers.Count == 0) return;
+                
+                long requestsPerServer = requestCount / servers.Count;
+                foreach (var server in servers)
+                {
+                    try
+                    {
+                        if (server != null)
+                        {
+                            server.HandleRequests((int)requestsPerServer);
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.Console.WriteLine($"Error handling requests for server: {ex.Message}");
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"Error sending requests to servers: {ex.Message}");
             }
         }
         
         public override void DeliverRequests(long requestCount)
         {
-            RouteTraffic(requestCount);
-            long remainingRequests = requestCount - CalculateRequests(requestCount);
-            if (remainingRequests > 0)
+            try
             {
-                NextHandler?.DeliverRequests(remainingRequests);
+                RouteTraffic(requestCount);
+                
+                try
+                {
+                    long remainingRequests = requestCount - CalculateRequests(requestCount);
+                    if (remainingRequests > 0)
+                    {
+                        PassToNext(remainingRequests);
+                    }
+                    else
+                    {
+                        PassToNext(requestCount);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Console.WriteLine($"Error calculating or passing remaining requests: {ex.Message}");
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                NextHandler?.DeliverRequests(requestCount);
+                System.Console.WriteLine($"Error in DeliverRequests: {ex.Message}");
+                
+                try
+                {
+                    if (NextHandler != null)
+                    {
+                        NextHandler.DeliverRequests(requestCount);
+                    }
+                }
+                catch
+                {
+                }
             }
         }
     }

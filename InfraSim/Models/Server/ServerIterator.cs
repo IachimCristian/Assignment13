@@ -22,28 +22,58 @@ namespace InfraSim.Models.Server
         {
             var servers = new List<IServer>();
             
-            if (cluster == null || cluster.Servers == null)
-                return servers;
-                
-            foreach (var server in cluster.Servers)
+            try
             {
-                if (server == null)
-                    continue;
+                if (cluster == null || cluster.Servers == null)
+                    return servers;
                     
-                if (server is ICluster subCluster)
+                foreach (var server in cluster.Servers)
                 {
-                    servers.AddRange(GetServers(subCluster));
-                }
-                else
-                {
-                    servers.Add(server);
+                    try
+                    {
+                        if (server == null)
+                            continue;
+                            
+                        if (server is ICluster subCluster)
+                        {
+                            servers.AddRange(GetServers(subCluster));
+                        }
+                        else
+                        {
+                            servers.Add(server);
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.Console.WriteLine($"Error processing server in iterator: {ex.Message}");
+                    }
                 }
             }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"Error getting servers from cluster: {ex.Message}");
+            }
+            
             return servers;
         }
 
-        public bool HasNext => Position < _servers.Count;
+        public bool HasNext => Position < (_servers?.Count ?? 0);
 
-        public IServer Next => HasNext ? _servers[Position++] : null;
+        public IServer Next 
+        { 
+            get 
+            {
+                try
+                {
+                    return HasNext ? _servers[Position++] : null;
+                }
+                catch (System.Exception ex)
+                {
+                    System.Console.WriteLine($"Error getting next server: {ex.Message}");
+                    Position++; 
+                    return null;
+                }
+            }
+        }
     }
 } 

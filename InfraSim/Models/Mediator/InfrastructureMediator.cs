@@ -409,6 +409,18 @@ namespace InfraSim.Models.Mediator
                 return new ServerIterator(null);
             }
             
+            if (Data != null && Gateway.Servers != null && !Gateway.Servers.Contains(Data)) // If the Data cluster wasn't properly included in Gateway, ensure we include it 
+            {
+                try
+                {
+                    Gateway.AddServer(Data); // Add the Data cluster to the Gateway cluster 
+                }
+                catch (Exception ex) // If there's an error, log it 
+                {
+                    Console.WriteLine($"Error adding Data to Gateway for iteration: {ex.Message}"); // Log the error 
+                }
+            }
+            
             return new ServerIterator(Gateway);
         }
 
