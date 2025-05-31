@@ -375,27 +375,74 @@ namespace InfraSim.Models.Mediator
 
         public void AddServer(IServer server) 
         {
-            if (server.Id == Guid.Empty)
+            try // Try to add the server to the correct cluster 
             {
-                server.Id = Guid.NewGuid();
+                if (server == null) // If the server is null, log an error and return 
+                {
+                    Console.WriteLine("Error: Cannot add null server"); // Log the error 
+                    return; // Return to avoid further execution 
+                }
+
+                if (server.Id == Guid.Empty)
+                {
+                    server.Id = Guid.NewGuid();
+                }
+                
+                ICommand addServerCommand = null;
+                
+                try
+                {
+                    switch (server.ServerType)
+                    {
+                        case ServerType.CDN:
+                        case ServerType.LoadBalancer:
+                            if (Gateway == null)
+                            {
+                                Console.WriteLine("Error: Gateway cluster is null");
+                                return;
+                            }
+                            addServerCommand = new AddServerCommand(Gateway, server, _serverDataMapper);
+                            break;
+                        case ServerType.Cache:
+                        case ServerType.Server:
+                            if (Processors == null)
+                            {
+                                Console.WriteLine("Error: Processors cluster is null");
+                                return;
+                            }
+                            addServerCommand = new AddServerCommand(Processors, server, _serverDataMapper);
+                            break;
+                        case ServerType.Database:
+                            if (Data == null)
+                            {
+                                Console.WriteLine("Error: Data cluster is null");
+                                return;
+                            }
+                            addServerCommand = new AddServerCommand(Data, server, _serverDataMapper);
+                            break;
+                        default:
+                            Console.WriteLine($"Error: Unsupported server type {server.ServerType}");
+                            return;
+                    }
+
+                    if (_commandManager == null)
+                    {
+                        Console.WriteLine("Error: Command manager is null");
+                        return;
+                    }
+
+                    _commandManager.Execute(addServerCommand);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating AddServerCommand: {ex.Message}");
+                    Console.WriteLine(ex.StackTrace);
+                }
             }
-            
-            switch (server.ServerType)
+            catch (Exception ex)
             {
-                case ServerType.CDN:
-                case ServerType.LoadBalancer:
-                    var addServerCommand = new AddServerCommand(Gateway, server, _serverDataMapper);
-                    _commandManager.Execute(addServerCommand);
-                    break;
-                case ServerType.Cache:
-                case ServerType.Server:
-                    addServerCommand = new AddServerCommand(Processors, server, _serverDataMapper);
-                    _commandManager.Execute(addServerCommand);
-                    break;
-                case ServerType.Database:
-                    addServerCommand = new AddServerCommand(Data, server, _serverDataMapper);
-                    _commandManager.Execute(addServerCommand);
-                    break;
+                Console.WriteLine($"Error in AddServer: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
             }
         }
 
