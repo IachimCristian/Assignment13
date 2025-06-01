@@ -375,74 +375,76 @@ namespace InfraSim.Models.Mediator
 
         public void AddServer(IServer server) 
         {
-            try // Try to add the server to the correct cluster 
+            if (server == null)
             {
-                if (server == null) // If the server is null, log an error and return 
-                {
-                    Console.WriteLine("Error: Cannot add null server"); // Log the error 
-                    return; // Return to avoid further execution 
-                }
+                Console.WriteLine("Error: Cannot add null server");
+                return;
+            }
 
+            if (_commandManager == null)
+            {
+                Console.WriteLine("Error: Command manager is not initialized");
+                return;
+            }
+
+            if (_serverDataMapper == null)
+            {
+                Console.WriteLine("Error: Server data mapper is not initialized");
+                return;
+            }
+
+            try
+            {
+                // Ensure server has an ID
                 if (server.Id == Guid.Empty)
                 {
                     server.Id = Guid.NewGuid();
                 }
-                
-                ICommand addServerCommand = null;
-                
-                try
+
+                // Determine target cluster and validate it exists
+                ICluster targetCluster = null;
+                switch (server.ServerType)
                 {
-                    switch (server.ServerType)
-                    {
-                        case ServerType.CDN:
-                        case ServerType.LoadBalancer:
-                            if (Gateway == null)
-                            {
-                                Console.WriteLine("Error: Gateway cluster is null");
-                                return;
-                            }
-                            addServerCommand = new AddServerCommand(Gateway, server, _serverDataMapper);
-                            break;
-                        case ServerType.Cache:
-                        case ServerType.Server:
-                            if (Processors == null)
-                            {
-                                Console.WriteLine("Error: Processors cluster is null");
-                                return;
-                            }
-                            addServerCommand = new AddServerCommand(Processors, server, _serverDataMapper);
-                            break;
-                        case ServerType.Database:
-                            if (Data == null)
-                            {
-                                Console.WriteLine("Error: Data cluster is null");
-                                return;
-                            }
-                            addServerCommand = new AddServerCommand(Data, server, _serverDataMapper);
-                            break;
-                        default:
-                            Console.WriteLine($"Error: Unsupported server type {server.ServerType}");
+                    case ServerType.CDN:
+                    case ServerType.LoadBalancer:
+                        if (Gateway == null)
+                        {
+                            Console.WriteLine("Error: Gateway cluster is not initialized");
                             return;
-                    }
-
-                    if (_commandManager == null)
-                    {
-                        Console.WriteLine("Error: Command manager is null");
+                        }
+                        targetCluster = Gateway;
+                        break;
+                    case ServerType.Cache:
+                    case ServerType.Server:
+                        if (Processors == null)
+                        {
+                            Console.WriteLine("Error: Processors cluster is not initialized");
+                            return;
+                        }
+                        targetCluster = Processors;
+                        break;
+                    case ServerType.Database:
+                        if (Data == null)
+                        {
+                            Console.WriteLine("Error: Data cluster is not initialized");
+                            return;
+                        }
+                        targetCluster = Data;
+                        break;
+                    default:
+                        Console.WriteLine($"Error: Unsupported server type {server.ServerType}");
                         return;
-                    }
+                }
 
-                    _commandManager.Execute(addServerCommand);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error creating AddServerCommand: {ex.Message}");
-                    Console.WriteLine(ex.StackTrace);
-                }
+                // Create and execute command
+                var addServerCommand = new AddServerCommand(targetCluster, server, _serverDataMapper);
+                _commandManager.Execute(addServerCommand);
+                Console.WriteLine($"Successfully added server {server.Id} of type {server.ServerType} to cluster {targetCluster.Id}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in AddServer: {ex.Message}");
-                Console.WriteLine(ex.StackTrace);
+                Console.WriteLine($"Error adding server: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 

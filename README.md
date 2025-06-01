@@ -1,122 +1,53 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/1iXIjRpu)
-# Assignment 11: UI Display with Adapter, Iterator & Visitor
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/Vmb41GP6)
+# Assigment 12 Infrastructure Simulator Conclusion with Strategy, Visitor, Observer and Chain of Responsibility
 
-In this assignment, we will enhance the infrastructure simulator's front end by wiring domain objects to the Blazor UI. We'll practise three design patterns: Adapter, Iterator, and Visitor.
+In this assignment, we will close our cycle on our infrastructure simulator. We’ll practice four more design patterns: **Strategy**, **Visitor**, **Observer**, and **Chain of Responsibility**.
 
 Completing the exercise will let us:
 
-- Adapt a domain model so the UI can bind directly to it (Adapter).
+* Validate the infrastructure based on different strategies (Strategy).
+* Calculate if the infrastructure is operational (Visitor).
+* React to user changes (Observer).
+* Route traffic efficiently through our system (Chain of Responsibility).
 
-- Traverse composite structures safely (Iterator).
 
-- Aggregate information over a heterogeneous structure (Visitor).
 
-- Round everything off with Razor component updates, undo/redo buttons and total‑cost display.
+## Part 1: Validating if the Infrastructure is Ok with Strategy
 
-## Part 1: Displaying our servers with Adapter
+We need to check if our infrastructure can continue receiving more users and requests to ensure it is ok. The validation will be different if it is a Server or a Cluster.
 
-The Adapter pattern converts the interface of one class into another interface that clients expect. It is most useful when we reuse an existing class whose API does not match the one required by a consuming layer (UI, external library, test harness, etc.).
+We define different validation strategies (e.g., for servers, gateways, processors) and assign them to each component. This way, each type of infrastructure node can have its own validation logic without modifying the node classes.
 
-Our UI needs a simple model with a Name, an Icon and a Color that reflects the server's current state.
+The Strategy pattern allows the selection of an algorithm's behavior at runtime. By encapsulating each validation rule separately, it promotes the open/closed principle.
 
-1. Create the `IServerInfo` with these properties.
-
+1. Create `IValidatorStrategy` with a validate method, that returns a boolean.
 ```csharp
-public interface IServerInfo
+public interface IValidatorStrategy
 {
-    public string Name { get; }
-    public string ImageUrl { get; }
-    public string StatusColor { get; }
+    bool Validate(IServer server);
 }
 ```
 
-2. Implement ServerInfoAdapter. It implements IServerInfo, receives an IServer in its constructor and stores it in a read‑only field/property.
+2. Create `ServerValidator` implementeing the `IValidatorStrategy`
 
-3. Use the server type to return the name and icon.
-Use the ones in this assignment or pick any from the web.
+- Return true if `Server.State` is not `FailedState`.
 
-**Note**: Since .NET 8, we can use switch expressions instead of the traditional switch statements.
-This is a good opportunity to apply a switch statement, here is an example:
-```csharp
-public string Name => Server.ServerType switch
-        {
-            ServerType.Server => "Server",
-            ServerType.Cache => "Cache",
-            ServerType.LoadBalancer => "Load Balancer",
-            ServerType.CDN => "CDN",
-            _ => throw new NotImplementedException()
-        };
+3. Create the `GatewayValidator` implementing the `IValidatorStrategy`
 
-````
+- Return true if the gateway has **at least one CDN** and **one LoadBalancer**.
 
+4. Create `ProcessorsValidator` implementing `IValidatorStrategy`
 
-4. Calculate the status color based on its status.
-Idle -> Gray
-Normal -> Blue
-Overloaded -> Orange
-Failed -> Red
+- Return true if the cluster has **at least one Cache** and **one Server**.
 
-<br>
+5. Add a `Validator` property of type `IValidatorStrategy` to `IServer` and implement it in `BaseServer`.
 
-### 🏁  Commit Your Changes
-<br><br><br><br>
+6. Modify the `Server` and `Cluster` constructors to accept and store an `IValidatorStrategy`.
 
-## Part 2: Navigating with Iterator
+7. Update the builder to accept a strategy, setting the default to `ServerValidator`.
 
-The Iterator pattern provides a uniform way to traverse elements of an aggregate object (a collection, tree, composite, …) without exposing its internal representation.
+8. Update `IServerFactory` and `ServerFactory` to pass the appropriate validator when creating servers or clusters.
 
-A cluster may contain individual servers and nested clusters, and we need to list all leaf servers, even those inside nested clusters. An iterator will give us a flat walk over the composite.
-
-
-
-1. Create an IServerIterator with two properties: HasNext and Next, where HasNext is a boolean and Next returns an IServer.
-
-2. Implement ServerIterator
-
-- Create the ServerIterator class implementing IServerIterator
-
-- Create a property to hold a list of IServer
-
-- On the constructor, it will need to receive a Cluster and call a recursive method to retrieve the servers and store them in the list of servers. Here is an example of the recursive GetServers
-
-```csharp
-private List<IServer> GetServers(ICluster cluster) {
-    var servers = new List<IServer>();
-    
-    cluster.Servers.ForEach(server => {
-        if (server is Cluster) {
-            servers.AddRange(GetServers((ICluster)server));
-        }
-        else {
-            servers.Add(server);
-        }
-    });
-
-    return servers;
-}
-```
-
-- Create an integer property to indicate the index positions. You can name it `Position`.
-
-3. Implement `HasNext` by comparing the `Position` with the Count of the List of servers.
-
-4. Implement the `Next` by returning the `Server` at the current `Position` and incrementing it.
-
-5. Add a property on the `IInfrastructureMediator` to return a new `Iterator`
-
-On the IInfrastructureMediator
-```csharp
-IServerIterator CreateServerIterator();
-```
-
-And on the InfrastructureMediator:
-
-```csharp
-public IServerIterator CreateServerIterator()
-{
-    return new ServerIterator(Gateway);
-}
-```
 
 
 <br>
@@ -124,355 +55,202 @@ public IServerIterator CreateServerIterator()
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
-## Part 3: Load the Servers from the database
+## Part 2: Using Visitor to Calculate Infrastructure Health
 
-When loading the page, we need to retrieve the data from the database to display the existing servers.
-We will return the clusters loaded with respective servers on the Server factory.
+The Visitor pattern lets you perform operations across a structure of objects without modifying the classes on which it operates. It separates data structures from behavior.
 
-1. Update the `IServerFactory` and `ServerFactory` to support the different clusters:
+We use the same visitor structure from the last assignment to evaluate each server's health. This allows us to decouple the validation logic from the server structure and compute the centralized infrastructure state.
+
+1. Create `StatusCalculator` implementing `IServerVisitor`.
+
+2. Add a `bool IsOK { get; private set; } = true` property.
+
+3. In the `Visit` method, update IsOK:
 
 ```csharp
-    public virtual ICluster CreateGatewayCluster();
-    public virtual ICluster CreateProcessorsCluster();
+IsOk = IsOk && server.Validator.Validate(server);
 ```
 
-2. Update the `ServerFactory` constructor to receive an `IServerDataMapper` on the constructor
+4. Add an `IsOK` property in `IInfrastructureMediator`.
 
-3. Update the creation of the cluster's methods to receive the servers from the database and filter out the desired servers.
-Remember, Gateway receives CDN and LoadBalancer. Processors receive Cache and Server.
+5. Implement `IsOK` in `InfrastructureMediator`.
 
-**Note**: You may need a public `Servers` setter in `IServerList` and its implementers (`Cluster`, `ServerListProxy`).
+- Use a similar approach to the TotalCost
 
+- Use the iterator for the servers
+
+- Check the GatewayCluster and ProcessorCluster
+
+6. In `UserCounter`, cancel the increment if the infrastructure is not ok:
+
+- Add a private `bool Canceled` field.
+
+- In the increment loop, check `Canceled` and break if true.
+
+- Reset `Canceled` at the start of incrementing.
+
+- Add a `Cancel()` method to set `Canceled = true`.
+
+7. In `Home/Index`, call `InfrastructureMediator.IsOK` inside `OnCounterChanged`. If false, call `UserCounter.Cancel()`.
 
 <br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
-## Part 4: Implement the visitor to get a total cost
+## Part 3: Observing User Count to Generate Traffic
 
-The Visitor pattern allows algorithms to be separated from the objects on which they operate. By moving the computation into a visitor, you can add new operations without changing the element classes.
+We’ll notify components when the user count changes using the **Observer pattern**.
 
-Every IServer has a Capability with an associated cost. UI needs the aggregate cost of the entire infrastructure. 
-Instead of adding a GetTotalCost() method to each server (violating SRP), we implement a CostCalculator visitor.
-All servers implement Accept(IServerVisitor) which forwards the call to the visitor’s Visit(this).
+The Observer pattern defines a one-to-many dependency between objects so that its dependents are notified automatically when one changes state.
 
+We use observers to allow components, like the infrastructure mediator, to react to user count and changes in real-time, enabling dynamic updates and traffic simulation.
 
-
-1. Create an IServerVisitor 
-
-- IServerVisitor will have a void Visit(IServer server)
-
-2. Create an IServerAcceptVisit
-
-- IServerAcceptVisit will have an accept method:
-
-```csharp
-void Accept(ISserverVisitor visitor);
-```
-
-3. Extent the IServer from IServerAcceptVisit
-
-4. Add the implementation on the BaseServer.
-
-```csharp
-public void Accept(IServerVisitor visitor)
-{
-    visitor.Visit(this);
-}
-```
-
-5. Create a CostCalculator implementing the IServerVisitor
-
-- Create a class property TotalCost
-
-```csharp
-public int TotalCost { get; private set; }
-```
-
-- implement the Visit by incrementing the TotalCost with the Server's capability cost.
-
-```csharp
-public void Visit(IServer server)
-{
-    TotalCost += server.Capability.Cost;
-}
-```
-
-
-
-6. In the IInfrastructureMediator create a TotalCost property.
-
-7. Implement it in the InfrastructureMediator:
-```csharp
-public int TotalCost
-    {
-        get
-        {
-            IServerIterator serverIterator = CreateServerIterator();
-            CostCalculator costCalculator = new CostCalculator();
-            
-            while(serverIterator.HasNext())
-                serverIterator.Next().Accept(costCalculator);
-            
-            return costCalculator.TotalCost;
-        }
-    }
-```
-
-<br>
-
-### 🏁  Commit Your Changes
-<br><br><br><br>
-
-## Part 5: Update the razor components
-
-Back to our web interface and  start bringing visibility to our Infrastructure simulator.
-
-If you try to run the project as it is you might find the following issue:
-```
-System.AggregateException: Some services are not able to be constructed
-```
-
-This error is caused by Dependency Injection dependencies. 
-Blazor will not start because scoped services are injected into singletons causing a lifetime mismatch. 
-If a singleton service depends on a scoped service, then the singleton might accidentally share the state from one user’s circuit with others, breaking isolation and introducing bugs.
-
-
-1. We need to update some of the singletons. The InfraSimContext is a Scoped and is injected into IInfrastriuctureMediator. 
-So this last one cannot be a Singleton, but a scoped, as the others that depend on it:
-
-```csharp
-builder.Services.AddScoped<IRepositoryFactory, RepositoryFactory>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddDbContext<InfraSimContext>();
-builder.Services.AddSingleton<ICapabilityFactory, CapabilityFactory>();
-builder.Services.AddScoped<IServerFactory, ServerFactory>();
-
-builder.Services.AddScoped<IServerDataMapper, ServerDataMapper>();
-builder.Services.AddSingleton<ICommandManager, CommandManager>();
-builder.Services.AddScoped<IInfrastructureMediator, InfrastructureMediator>();
-```
-
-2. Update Actions.razor
-
-- Inject the IServerFactory
-```csharp
-@inject IServerFactory ServerFactory
-```
-
-- Change the `AddPressed` to receive an IServer
-
-```csharp
-public EventCallback<IServer> AddPressed { get; set; }
-```
-
-- Create an Add Button for each kind of servers, and call the AddPressed with an instance for the specific server from the server factory:
-```csharp
-<div class="div-container">
-    <button class="round-button green-button" @onclick="@StartPressed">Start</button>
-</div>
-<div class="div-container">
-    <button class="round-button grey-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateCDN())">Add CDN</button>
-    <button class="round-button grey-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateLoadBalancer())">Add LB</button>
-</div>
-<div class="div-container">
-    <button class="round-button grey-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateServer())">Add Server</button>
-    <button class="round-button grey-button" @onclick="() => AddPressed.InvokeAsync(ServerFactory.CreateCache())">Add Cache</button>
-</div>
-```
-
-3. Update Index/Home 
-
-- Inject the InfrastructureMediator
-
-```csharp
-@inject IInfrastructureMediator InfrastructureMediator
-```
-
-- Maintain a local list of servers:
-
-```csharp
-List<IServer> Servers = new List<IServer>();
-```
-
-
-- Create a RefreshUI method to reload the ServerIterator, fill the list of servers from the iterator and call the StateHasChanged
-
-```csharp
-
-private void RefreshUI(){
-    Servers = new List<IServer>();
-    IServerIterator iterator = InfrastructureMediator.CreateServerIterator();
-    while(iterator.HasNext){
-        Servers.Add(iterator.Next);
-    }
-    StateHasChanged();
-}
-```
-
-- Update the AddServer to receive the server as an argument, call the infrastructure mediator, and call the refresh UI
+1. Create `IObserver` with:
 
 ```csharp 
-protected void AddServer(IServer server){
-    InfrastructureMediator.AddServer(server);
-    RefreshUI();
-}
+void Update(int users);
 ```
 
-- Update the `OnInitialize` method to call the RefreshUI:
+2. Create `ISubject` with:
 
 ```csharp
-    protected override void OnInitialized(){
-        UserCounter.OnCounterChanged += StateHasChanged;
-        RefreshUI();
-    }
+void RegisterObserver(IObserver observer);
+void RemoveObserver(IObserver observer);
+void NotifyObservers();
 ```
 
+3. Have `UserCounter` implement `ISubject`:
+- Create a List<IObserver>
+- Register by adding an observer to the list
+- Remove by removing from taht list
+- Notify by calling update on each of the elements of the list
 
+4. Call `NotifyObservers()` on every user increment step.
 
-4. Update Server.razor
+5. Make `IInfrastructureMediator` extend `IObserver`.
 
-- Create a parameter to receive an IServerInfo
-@code {
-    [Parameter]
-    public IServerInfo? ServerInfo { get; set; } 
-}
+6. Implement `Update(int users)` in `InfrastructureMediator` (leave the body empty for now).
 
-- Create a new div to add the status element
-
-```html
-<div class="div-container">
-    <img class="img-size" src=@ServerInfo?.ImageUrl />
-    <div>
-        <div class="status @ServerInfo?.StatusColor">&nbsp;</div>
-        <span>@ServerInfo?.Name</span>
-    </div>
-    
-</div>
-```
-
-- Create the following styles
+7. In `Home/Index`, register the mediator in `OnInitialized`:
 ```csharp
-.status{
-    width: 20px;
-    height: 20px;
-    border-radius: 10px;
-}
-.blue{
-    background-color: blue;
-}
-.gray{
-    background-color: gray;
-}
-.red{
-    background-color: red;
-}
-.orange{
-    background-color: orange;
-}
+UserCounter.RegisterObserver(InfrastructureMediator);
 ```
 
-- In the Home/Index, update the servers panel to pass the ServerInfo
-
-```csharp
-<div class="servers-panel">
-    @foreach (IServer server in Servers){
-        <Server ServerInfo="@(new ServerInfoAdapter(server))" />
-    }
-    
-</div>
-```
-
-- Drop server icons into `wwwroot/images`
-
-
-
-5. Display the infrastructure total cost
-
-- On the Index/Home component add a span below the users' count with a reference for the value:
-
-```csharp
-
-<span>€ @InfrastructureMediator.TotalCost</span>
-```
-
-6. Add the Undo and Redo Options in the `Actions.razor`
-
-- inject the CommandManager
-
-```csharp
-@inject ICommandManager CommandManager
-```
-
-- Add the new buttons
-
-```csharp
-<div class="div-container">
-    
-    <button disabled="@UndoDisabled" class="round-button grey-button" @onclick="Undo">Undo</button>
-    <button disabled="@RedoDisabled" class="round-button grey-button" @onclick="Redo">Redo</button>
-</div>
-```
-
-- Create a parameter to pass the refresh page action:
-
-```csharp
-[Parameter]
-public EventCallback Refresh { get; set; }
-```
-
-- Implement the Undo/Redo logic:
-```csharp
-   void Redo()
-    {
-        CommandManager.Redo();
-        Refresh.InvokeAsync();
-    }
-    void Undo()
-    {
-        CommandManager.Undo();
-        Refresh.InvokeAsync();
-    }
-```
-
-- Create the Visibility properties for the buttons:
-
-```csharp
-public bool UndoDisabled => !CommandManager.HasUndo;
-public bool RedoDisabled => !CommandManager.HasRedo;
-```
-
-- In the Index/Home component, pass the RefreshUI to the Actions' Refresh property
-
-```csharp
-<Actions StartPressed="StartIncrementing" AddPressed="AddServer" Refresh="RefreshUI" />
-```
-
-
-7. Smoke Tests
-
-- Add each server type.
-- Reload the browser—the servers should still be there.
-- Verify Undo and Redo stack.
-
-<br>
 
 ### 🏁  Commit Your Changes
 <br><br><br><br>
 
+## Part 4: Distributing Traffic with Chain of Responsibility
+
+We’ll simulate traffic delivery with the **Chain of Responsibility** pattern.
+
+This pattern allows passing requests along a chain of handlers, where each handler decides to process the request, and pass it to the next handler.
+
+We use it to route traffic dynamically through our system, CDNs, Load Balancers, Caches, and Servers, each handling as much traffic as possible.
+
+Using the defined TrafficRouting we will call it sequentially in the following order:
+
+    1. CDNTrafficRouting
+    2. FullTrafficRouting (LoadBalancer)
+    3. CacheTrafficRouting
+    4. FullTrafficRouting (Server)
 
 
+1. Create `ITrafficDelivery`:
+```csharp
+    void SetNext(ITrafficDelivery nextHandler);
+    void DeliverRequests(long requestCount);
+```
+
+2. Create abstract `TrafficDelivery` implementing `ITrafficDelivery`.
+* Add a `protected ITrafficDelivery? NextHandler`.
+* Implement `SetNext()` to store the next handler.
+* Leave `DeliverRequests()` abstract.
+
+3. Have `TrafficRouting` extend `TrafficDelivery`:
+```csharp
+public abstract class TrafficRouting : TrafficDelivery, ITrafficRouting
+```
+
+4. Implement `DeliverRequests` like this:
+
+```csharp
+
+public override void DeliverRequests(long requestCount)
+{
+    RouteTraffic(requestCount);
+    long remainingRequests = requestCount - CalculateRequests(requestCount);
+    if (remainingRequests > 0)
+    {
+        NextHandler?.DeliverRequests(remainingRequests);
+    } else {
+        NextHandler?.DeliverRequests(requestCount);
+    }
+}
+```
+
+5. Ensure all request counters use `long` to avoid overflow.
+
+6. In `InfrastructureMediator`, create a `GetDeliveryChain` method:
+
+- Create your delivery chain:
+```csharp
+ITrafficDelivery CDNDeliveryChain = new CDNTrafficRouting(Gateway.Servers);
+ITrafficDelivery LBDeliveryChain = new FullTrafficRouting(Gateway.Servers, ServerType.LoadBalancer);
+ITrafficDelivery CacheDeliveryChain = new CacheTrafficRouting(Processors.Servers);
+ITrafficDelivery ServerDeliveryChain = new FullTrafficRouting(Processors.Servers, ServerType.Server);
+```
+
+- Set the chain order
+```csharp
+CDNDeliveryChain.SetNext(LBDeliveryChain);
+LBDeliveryChain.SetNext(CacheDeliveryChain);
+CacheDeliveryChain.SetNext(ServerDeliveryChain);        
+```
+
+- return the top element in the chain
+```csharp
+return CDNDeliveryChain;
+```
+
+6. Implement the `Update` method in `InfrastructureMediator`. Let's assume that each user generate 4 requests.
+
+* Multiply `users * 4` to get `requestCount`.
+* Get the chain via `GetDeliveryChain()`.
+* Call `DeliverRequests(requestCount)`.
+
+<br>
+
+### 🏁 Commit Your Changes
+
+<br><br><br><br>
+
+## Part 5: Play with it
+
+1. Try to reach **200,000 users**.
+
+2. In a file `Resolution.txt`, record:
+
+   * The maximum user count reached.
+   * The final total cost.
+
+
+<br>
+
+### 🏁 Commit Your Changes
+
+<br><br><br><br>
 
 ## Final Reminder
 
-⚠️  Don't Forget: Push your code to this assignment's remote repository once you have completed all parts of the assignment. This exercise focuses on gathering the elements for being represented on the UI.
+⚠️ Don’t Forget: Push your code to this assignment’s remote repository once you have completed all parts of the assignment. 
 
-By finishing Assignment 11 you will have:
+By completing this assignment you will have:
 
-- **Adapter** to decouple domain objects from UI needs.
-- **Iterator** to flatten composite structures safely.
-- **Visitor** to aggregate metrics (cost!) across heterogeneous nodes.
+* **Strategy** to handle validation logic for servers.
+* **Visitor** to evaluate if the infrastructure is operational.
+* **Observer** to react to dynamic changes.
+* **Chain of Responsibility** to simulate traffic flow.
 
-These patterns keep the infrastructure simulator maintainable and extensible. Enjoy and reach out for help whenever you need it. 🚀
-
+These patterns will ensure our infrastructure simulator remains robust and scalable. Great job and, keep building! 🚀
