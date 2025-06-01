@@ -55,10 +55,13 @@ namespace InfraSim.Models.Mediator
                         }
                     }
                     
-                    if (Data != null) // Check if the Data cluster exists 
+                    if (Data == null || Data.Servers == null || !Data.Servers.Any(s => s.ServerType == ServerType.Database)) // Check if the Data cluster exists and has a database server 
                     {
-                        Data.Accept(statusCalculator); // Accept the status calculator 
-                    }
+                        Console.WriteLine("Error: No database servers found in Data cluster"); // Log the error 
+                        return false; // Return false if the Data cluster doesn't exist or doesn't have a database server 
+                    } // End of if statement 
+                    
+                    Data.Accept(statusCalculator);
                     
                     return statusCalculator.IsOK;
                 }
@@ -475,6 +478,12 @@ namespace InfraSim.Models.Mediator
 
         public void Update(int users)
         {
+            if (!IsOK)
+            {
+                Console.WriteLine("Error: Infrastructure is not operational. Ensure database servers are present.");
+                return;
+            }
+            
             long requestCount = users * 4;
             ITrafficDelivery chain = GetDeliveryChain(); 
             chain.DeliverRequests(requestCount);
