@@ -375,13 +375,13 @@ namespace InfraSim.Models.Mediator
 
         public void AddServer(IServer server) 
         {
-            if (server == null)
+            if (server == null) // If the server is null, log an error and return 
             {
-                Console.WriteLine("Error: Cannot add null server");
-                return;
+                Console.WriteLine("Error: Cannot add null server"); // Log the error 
+                return; // Return to avoid further execution 
             }
 
-            if (_commandManager == null)
+            if (_commandManager == null) // If the command manager is null, log an error and return 
             {
                 Console.WriteLine("Error: Command manager is not initialized");
                 return;
